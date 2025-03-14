@@ -203,6 +203,7 @@ class RigidBody {
         void HideBody() {mesh->SetVisible(false);}
         void ShowCG() {AddVisualizationBall(system, body->GetPos());}
         void setPos(ChVector3d poss){body->SetPos(poss);}
+        void setColor(ChColor colll){mesh->SetColor(colll);}
     
     private:
         ChSystemNSC& system;
@@ -258,13 +259,14 @@ class RigidBody {
             mesh->SetMesh(trimesh);
             // mesh->SetOpacity(0.5f);
             // mesh->SetBackfaceCull(true);
-            body->AddVisualShape(mesh, ChFrame<>(-cog, ChMatrix33<>(1)));
+            // mesh->SetColor(colorr);
+            body->AddVisualShape(mesh, ChFrame<>(ChVector3d(0,0,0), ChMatrix33<>(1)));
     
             // Collision
             coll_mesh = chrono_types::make_shared<ChVisualShapeTriangleMesh>();
             coll_mesh->SetMesh(coll_trimesh);
             coll_mesh->SetVisible(false);
-            body->AddVisualShape(coll_mesh, ChFrame<>(-cog, ChMatrix33<>(1)));
+            body->AddVisualShape(coll_mesh, ChFrame<>(ChVector3d(0,0,0), ChMatrix33<>(1)));
     
             // Setup collision model
             coll_model = chrono_types::make_shared<ChCollisionModel>();
@@ -300,16 +302,16 @@ int main(int argc, char* argv[]) {
     auto Stator_body = stator.GetBody();
 
     std::vector<std::string> file_names = {"" , // empty value to start with index 1
-        "../dynoObj/body_1_1",     // ("Part1-1");
-        "../dynoObj/body_2_1",     // ("GearA-2");
-        "../dynoObj/body_3_1",     // ("GearF-1");
-        "../dynoObj/body_4_1",     // ("frame-1");
-        "../dynoObj/body_5_1",     // ("GearB-1");
-        "../dynoObj/body_6_1",     // ("GearC-1");
-        "../dynoObj/body_7_1",     // ("GearD-1");
-        "../dynoObj/body_8_1",     // ("GearE-1");
-        "../dynoObj/body_9_1",     // ("Part2_flywheel-1");
-        "../dynoObj/body_10_1"     // ("Part2_dyno-1");
+        "../dynoObj/body_1_1",     // ("Part1-Motor");
+        "../dynoObj/body_2_1",     // ("GearA");
+        "../dynoObj/body_3_1",     // ("GearF");
+        "../dynoObj/body_4_1",     // ("frame");
+        "../dynoObj/body_5_1",     // ("GearB");
+        "../dynoObj/body_6_1",     // ("GearC");
+        "../dynoObj/body_7_1",     // ("GearD");
+        "../dynoObj/body_8_1",     // ("GearE");
+        "../dynoObj/body_9_1",     // ("Part2_flywheel");
+        "../dynoObj/body_10_1"     // ("Part2_dyno");
     };
     std::vector<std::unique_ptr<RigidBody>> bodies(file_names.size());
     std::vector<std::shared_ptr<ChBody>> body_ptrs(file_names.size());
@@ -339,17 +341,25 @@ int main(int argc, char* argv[]) {
         ChQuaternion<>(0.679959230544171,0.679959230544171,0.194050108986773,-0.194050108986773)
     };
     // Initialize RigidBody objects and store values (starting from index 1)
+    bodies[1] = std::make_unique<RigidBody>(sys, file_names[1], 7850.00 / (1e9));
+    bodies[2] = std::make_unique<RigidBody>(sys, file_names[2], 7850.00 / (1e9));
+    bodies[3] = std::make_unique<RigidBody>(sys, file_names[3], 7850.00 / (1e9), true);
+    bodies[4] = std::make_unique<RigidBody>(sys, file_names[4], 7850.00 / (1e9), true);
+    bodies[5] = std::make_unique<RigidBody>(sys, file_names[5], 7850.00 / (1e9), true);
+    bodies[6] = std::make_unique<RigidBody>(sys, file_names[6], 7850.00 / (1e9), true);
+    bodies[7] = std::make_unique<RigidBody>(sys, file_names[7], 7850.00 / (1e9), true);
+    bodies[8] = std::make_unique<RigidBody>(sys, file_names[8], 7850.00 / (1e9), true);
+    bodies[9] = std::make_unique<RigidBody>(sys, file_names[9], 7850.00 / (1e9), true);
+    bodies[10] = std::make_unique<RigidBody>(sys, file_names[10], 7850.00 / (1e9), true);
     for (size_t i = 1; i < file_names.size(); ++i) {
-        std::cout<<"\t\t\tLoop "<<i<<std::endl;
-        if(i==4)bodies[i] = std::make_unique<RigidBody>(sys, file_names[i], 7850.00 / (1e9), true);
-        else bodies[i] = std::make_unique<RigidBody>(sys, file_names[i], 7850.00 / (1e9), true);
         body_ptrs[i] = bodies[i]->GetBody();
         cogs[i] = bodies[i]->GetCOG();
         body_ptrs[i]->SetPos(positions[i] - positions[4]);
         body_ptrs[i]->SetRot(rotss[i]);
+        if(i==1)bodies[1]->setColor(ChColor(1,0,0));
     }
     // ===========================================================================================================================================================================================
-    // ======== LINK DEFINITION -> FIXED JOINT: RotorWinding - Shaft ====================================================================================================================================
+    // ======== LINK DEFINITION -> FIXED JOINT: frame - stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
     ChVector3d RotorWinding_Shaft_Link_Position(bodies[1]->getPos());   // [mm] set the position in the 3D space of the link respect to the absolute frame
     //RotorWinding_Shaft_Link_Position[2] = RotorWinding_Shaft_Link_Position[2] + 7.0;  
@@ -357,22 +367,22 @@ int main(int argc, char* argv[]) {
     RotorWinding_Shaft_Link_Orientation.SetFromAngleAxis(0.0 * (M_PI / 180.0), ChVector3d(0, 1, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Shaft_Link_Frame(RotorWinding_Shaft_Link_Position, RotorWinding_Shaft_Link_Orientation);
     auto RotorWinding_Shaft_Link_Fixed = chrono_types::make_shared<ChLinkLockLock>();
-    RotorWinding_Shaft_Link_Fixed->Initialize(RotorWinding_body,                      // Body 1  
-        Shaft_body,                     // Body 2  
+    RotorWinding_Shaft_Link_Fixed->Initialize(body_ptrs[4],                      // Body 1  
+        body_ptrs[1],                     // Body 2  
         RotorWinding_Shaft_Link_Frame);        // Location and orientation of the frame   
     sys.AddLink(RotorWinding_Shaft_Link_Fixed);
 
     // ===========================================================================================================================================================================================
-    // ======== LINK DEFINITION -> REVOLUTE JOINT: RotorWinding - Stator ====================================================================================================================================
+    // ======== LINK DEFINITION -> REVOLUTE JOINT: stator - driverGearA ====================================================================================================================================
     // ===========================================================================================================================================================================================
-    ChVector3d RotorWinding_Stator_Link_Position(RotorWinding_body->GetPos());            // [mm] set the position in the 3D space of the link respect to the absolute frame
+    ChVector3d RotorWinding_Stator_Link_Position(body_ptrs[2]->GetPos());            // [mm] set the position in the 3D space of the link respect to the absolute frame
     //RotorWinding_Stator_Link_Position[2] = RotorWinding_Stator_Link_Position[2] + 7.0;
     ChQuaternion<> RotorWinding_Stator_Link_Orientation;
     RotorWinding_Stator_Link_Orientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(0, 1, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Stator_Link_Frame(RotorWinding_Stator_Link_Position, RotorWinding_Stator_Link_Orientation);
     auto RotorWinding_Stator_Link_Revolute = chrono_types::make_shared<ChLinkLockRevolute>();
-    RotorWinding_Stator_Link_Revolute->Initialize(RotorWinding_body,                      // Body 1  
-        Stator_body,                     // Body 2  
+    RotorWinding_Stator_Link_Revolute->Initialize(body_ptrs[2],                      // Body 1  
+        body_ptrs[1],                     // Body 2  
         RotorWinding_Stator_Link_Frame);        // Location and orientation of the frame  
     sys.AddLink(RotorWinding_Stator_Link_Revolute);
 
