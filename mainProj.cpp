@@ -336,7 +336,7 @@ class RigidBody {
             // Visualization
             mesh = chrono_types::make_shared<ChVisualShapeTriangleMesh>();
             mesh->SetMesh(trimesh);
-            mesh->SetOpacity(0.5f);
+            // mesh->SetOpacity(0.5f);
             // mesh->SetBackfaceCull(true);
             body->AddVisualShape(mesh, ChFrame<>(-cog, ChMatrix33<>(1)));
     
