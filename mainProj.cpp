@@ -169,14 +169,13 @@ void AddCylAxis(ChSystemNSC& sys, const ChVector3d& position, ChQuaternion<> joi
     axisBody->AddVisualShape(axisShape, ChFrame<>(ChVector3d(0, 0, 0), jointOrientation));
     sys.Add(axisBody);
 }
-void CreateJoint(std::shared_ptr<ChBody> bodyA, std::shared_ptr<ChBody> bodyB, ChSystemNSC& sys, JointType jointType, bool showAxis = false) {
+void CreateJoint(ChSystemNSC& sys, std::shared_ptr<ChBody> bodyA, std::shared_ptr<ChBody> bodyB, JointType jointType, const ChVector3d& orinn, bool showAxis = false) {
     ChVector3d jointPosition(bodyA->GetPos());
 
     ChQuaternion<> jointOrientation;
-    if (jointType == JointType::PRISMATIC)jointOrientation.SetFromAngleAxis(90.0 * (CH_PI / 180.0), ChVector3d(0, 0, 1));
-    else jointOrientation.SetFromAngleX(0);
-    
+    jointOrientation.SetFromAngleAxis(90.0 * (CH_PI / 180.0), orinn);    
     ChFrame<> jointFrame(jointPosition, jointOrientation);
+
     std::shared_ptr<ChLinkLock> Joint;
     switch (jointType) {
         case JointType::FIXED:      {Joint = chrono_types::make_shared<ChLinkLockLock>();      break;}
@@ -185,19 +184,13 @@ void CreateJoint(std::shared_ptr<ChBody> bodyA, std::shared_ptr<ChBody> bodyB, C
         default:    throw std::invalid_argument("Invalid joint type.");
     }
 
-    Joint->Initialize(bodyA, bodyB, jointFrame);
+    ChQuaternion<> jointOrientation;
+    jointOrientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
+    ChFrame<> jointFrame(jointPosition, jointOrientation);
+    Joint->Initialize(bodyA, bodyB, jointFrame);  
     sys.AddLink(Joint);
-
-    if(showAxis){
-        auto axisShape = chrono_types::make_shared<ChVisualShapeCylinder>(2.5, 100); // Radius = 2, Length = 50
-        axisShape->SetColor(ChColor(1, 0, 0)); // Green color for rotation axis
-
-        auto axisBody = chrono_types::make_shared<ChBody>();
-        axisBody->SetPos(jointPosition);
-        axisBody->SetFixed(true); // The axis is just for visualization
-        axisBody->AddVisualShape(axisShape, ChFrame<>(ChVector3d(0, 0, 0), jointOrientation));
-        sys.Add(axisBody);
-    } 
+    
+    if(showAxis)AddCylAxis(sys, bodyA->GetPos(), jointOrientation);
 }
 
 class RigidBody {
@@ -354,7 +347,7 @@ int main(int argc, char* argv[]) {
     bodies[2] = std::make_unique<RigidBody>(sys, file_names[2], 785000.00 / (1e9));
     bodies[3] = std::make_unique<RigidBody>(sys, file_names[3], 7850.00 / (1e9), true);
     bodies[4] = std::make_unique<RigidBody>(sys, file_names[4], 7850.00 / (1e9), true);
-    bodies[5] = std::make_unique<RigidBody>(sys, file_names[5], 7850.00 / (1e9), true);
+    bodies[5] = std::make_unique<RigidBody>(sys, file_names[5], 7850.00 / (1e9), true);bodies[5]->setColor(ChColor(0,1,0));bodies[5]->HideBody();
     bodies[6] = std::make_unique<RigidBody>(sys, file_names[6], 7850.00 / (1e9), true);
     bodies[7] = std::make_unique<RigidBody>(sys, file_names[7], 7850.00 / (1e9), true);
     bodies[8] = std::make_unique<RigidBody>(sys, file_names[8], 7850.00 / (1e9), true);
@@ -373,15 +366,12 @@ int main(int argc, char* argv[]) {
     // ===========================================================================================================================================================================================
     // ======== LINK DEFINITION -> FIXED JOINT: frame - stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
-    ChVector3d RotorWinding_Shaft_Link_Position(body_ptrs[4]->GetPos());   // [mm] set the position in the 3D space of the link respect to the absolute frame
-    //RotorWinding_Shaft_Link_Position[2] = RotorWinding_Shaft_Link_Position[2] + 7.0;  
+    ChVector3d RotorWinding_Shaft_Link_Position(body_ptrs[4]->GetPos()); 
     ChQuaternion<> RotorWinding_Shaft_Link_Orientation;
     RotorWinding_Shaft_Link_Orientation.SetFromAngleAxis(0.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Shaft_Link_Frame(RotorWinding_Shaft_Link_Position, RotorWinding_Shaft_Link_Orientation);
     auto RotorWinding_Shaft_Link_Fixed = chrono_types::make_shared<ChLinkLockLock>();
-    RotorWinding_Shaft_Link_Fixed->Initialize(body_ptrs[4],                      // Body 1  
-        Stator_body,                     // Body 2  
-        RotorWinding_Shaft_Link_Frame);        // Location and orientation of the frame   
+    RotorWinding_Shaft_Link_Fixed->Initialize(body_ptrs[4], Stator_body, RotorWinding_Shaft_Link_Frame);   
     sys.AddLink(RotorWinding_Shaft_Link_Fixed);
 
     // ===========================================================================================================================================================================================
@@ -389,17 +379,59 @@ int main(int argc, char* argv[]) {
     // ===========================================================================================================================================================================================
     
     AddVisualizationBall(sys, RotorWinding_body->GetPos());
-    ChVector3d RotorWinding_Stator_Link_Position(RotorWinding_body->GetPos());            // [mm] set the position in the 3D space of the link respect to the absolute frame
-    //RotorWinding_Stator_Link_Position[2] = RotorWinding_Stator_Link_Position[2] + 7.0;
+
+    ChVector3d RotorWinding_Stator_Link_Position(RotorWinding_body->GetPos());
     ChQuaternion<> RotorWinding_Stator_Link_Orientation;
     RotorWinding_Stator_Link_Orientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Stator_Link_Frame(RotorWinding_Stator_Link_Position, RotorWinding_Stator_Link_Orientation);
     auto RotorWinding_Stator_Link_Revolute = chrono_types::make_shared<ChLinkLockRevolute>();
-    RotorWinding_Stator_Link_Revolute->Initialize(RotorWinding_body,                      // Body 1  
-        Stator_body,                     // Body 2  
-        RotorWinding_Stator_Link_Frame);        // Location and orientation of the frame  
+    RotorWinding_Stator_Link_Revolute->Initialize(RotorWinding_body, Stator_body, RotorWinding_Stator_Link_Frame);  
     sys.AddLink(RotorWinding_Stator_Link_Revolute);
+
     AddCylAxis(sys, RotorWinding_body->GetPos(), RotorWinding_Stator_Link_Orientation);
+
+    double radA = 20;
+    double radB = 4;
+    double gearLen = 1;
+    double gearDen = 1000;
+    // Contact material shared among all bodies
+    auto mat = chrono_types::make_shared<ChContactMaterialNSC>();
+
+    // Shared visualization material
+    auto vis_mat = chrono_types::make_shared<ChVisualMaterial>();
+    vis_mat->SetKdTexture(GetChronoDataFile("textures/pinkwhite.png"));
+    // ===========================================================================================================================================================================================
+    // ======== LINK DEFINITION -> REVOLUTE JOINT: GearB - Frame ====================================================================================================================================
+    // ===========================================================================================================================================================================================
+    
+    auto mbody_gearB = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radA, gearLen, gearDen, true, false, mat);
+    sys.Add(mbody_gearB);
+    mbody_gearB->SetPos(positions[5]-positions[4]);
+    mbody_gearB->SetRot(QuatFromAngleX(CH_PI_2));
+    mbody_gearB->GetVisualShape(0)->SetMaterial(0, vis_mat);
+
+    auto mbody_gearC = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radA, gearLen, gearDen, true, false, mat);
+    sys.Add(mbody_gearC);
+    mbody_gearC->SetPos(positions[6]-positions[4]);
+    mbody_gearC->SetRot(QuatFromAngleX(CH_PI_2));
+    mbody_gearC->GetVisualShape(0)->SetMaterial(0, vis_mat);
+    // for aesthetic reasons, also add a thin cylinder only as a visualization:
+    // auto mshaft_shape = chrono_types::make_shared<ChVisualShapeCylinder>(10, 100);
+    // mbody_gearC->AddVisualShape(mshaft_shape, ChFrame<>(positions[5]-positions[4], RotorWinding_Stator_Link_Orientation));
+
+    // AddVisualizationBall(sys, body_ptrs[5]->GetPos());
+
+    // ChVector3d GearB_Frame_Link_Position(mbody_gearB->GetPos());
+    // ChQuaternion<> GearB_Frame_Link_Orientation;
+    // GearB_Frame_Link_Orientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
+    // ChFrame<> GearB_Frame_Link_Frame(GearB_Frame_Link_Position, GearB_Frame_Link_Orientation);
+    // auto GearB_Frame_Link_Revolute = chrono_types::make_shared<ChLinkLockRevolute>();
+    // GearB_Frame_Link_Revolute->Initialize(mbody_gearB, body_ptrs[4], GearB_Frame_Link_Frame);  
+    // sys.AddLink(GearB_Frame_Link_Revolute);
+    
+    // AddCylAxis(sys, mbody_gearB->GetPos(), GearB_Frame_Link_Orientation);
+
+    CreateJoint(sys, mbody_gearB, body_ptrs[4], JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
 
     // ===========================================================================================================================================================================================
     // ======== DYNAMIC FORCES AND TORQUES CRATION ================================================================================================================================================
