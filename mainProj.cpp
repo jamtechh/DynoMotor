@@ -372,17 +372,13 @@ int main(int argc, char* argv[]) {
     double gearDen = 1000;
     // Contact material shared among all bodies
     auto mat = chrono_types::make_shared<ChContactMaterialNSC>();
-
     // Shared visualization material
     auto vis_mat = chrono_types::make_shared<ChVisualMaterial>();
     vis_mat->SetKdTexture(GetChronoDataFile("textures/pinkwhite.png"));
-    // ===========================================================================================================================================================================================
-    // ======== LINK DEFINITION -> REVOLUTE JOINT: GearB - Frame ====================================================================================================================================
-    // ===========================================================================================================================================================================================
-    
+
     auto mbody_gearA = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radA, gearLen, gearDen, true, false, mat);
     sys.Add(mbody_gearA);
-    mbody_gearA->SetPos(positions[2]-positions[4]);
+    mbody_gearA->SetPos(positions[2]-positions[4]+ChVector3d(0,5,0));
     mbody_gearA->SetRot(QuatFromAngleX(CH_PI_2));
     mbody_gearA->GetVisualShape(0)->SetMaterial(0, vis_mat);
 
@@ -399,85 +395,39 @@ int main(int argc, char* argv[]) {
     mbody_gearC->GetVisualShape(0)->SetMaterial(0, vis_mat);
 
     // CreateJoint(sys, Frame_body, Stator_body, JointType::FIXED, ChVector3d(1, 0, 0));
-    CreateJoint(sys, Rotor_body, Stator_body, JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
-    CreateJoint(sys, mbody_gearA, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
-    CreateJoint(sys, mbody_gearB, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
-    CreateJoint(sys, mbody_gearC, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
-
-    ChQuaternion<> jointOr;
-    jointOr.SetFromAngleAxis(-90.0 * (CH_PI / 180.0), ChVector3d(1, 0, 0));   
-
-    auto link_gearAB = chrono_types::make_shared<ChLinkLockGear>();
-    link_gearAB->Initialize(mbody_gearA, mbody_gearB, ChFrame<>());
-    link_gearAB->SetFrameShaft1(GetFramee(mbody_gearA));
-    link_gearAB->SetFrameShaft2(ChFrame<>(mbody_gearB->GetPos(), jointOr));
-    link_gearAB->SetTransmissionRatio(radA / radB);
-    // link_gearAB->SetEnforcePhase(true);
-    sys.AddLink(link_gearAB);
+    CreateJoint(sys, Rotor_body, Stator_body, JointType::REVOLUTE, ChVector3d(1, 0, 0));
+    // CreateJoint(sys, mbody_gearA, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0));
+    CreateJoint(sys, mbody_gearB, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0));
+    CreateJoint(sys, mbody_gearC, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0));
 
     // ...impose rotation speed between the first gear and the fixed truss
-    int motorSpeed = -10;
+    int motorSpeed = 10;
     ChVector3d jointPos(mbody_gearA->GetPos());
-    // ChQuaternion<> jointOr;
+    ChQuaternion<> jointOr;
     jointOr.SetFromAngleAxis(90.0 * (CH_PI / 180.0), ChVector3d(1, 0, 0));    
     ChFrame<> jointFrame(jointPos, jointOr);
     auto link_motor = chrono_types::make_shared<ChLinkMotorRotationSpeed>();
     link_motor->Initialize(mbody_gearA, Frame_body, GetFramee(mbody_gearA));
     link_motor->SetSpeedFunction(chrono_types::make_shared<ChFunctionConst>(motorSpeed));
-    sys.AddLink(link_motor);
+    sys.AddLink(link_motor);   
 
-    // ===========================================================================================================================================================================================
-    // ======== DYNAMIC FORCES AND TORQUES CRATION ================================================================================================================================================
-    // ===========================================================================================================================================================================================
+    auto link_gearAB = chrono_types::make_shared<ChLinkLockGear>();
+    link_gearAB->Initialize(mbody_gearA, mbody_gearB, ChFrame<>());
+    link_gearAB->SetFrameShaft1(GetFramee(mbody_gearA));
+    link_gearAB->SetFrameShaft2(GetFramee(mbody_gearB));
+    link_gearAB->SetTransmissionRatio(radA / radB);
+    link_gearAB->SetEpicyclic(true);
+    // link_gearAB->SetEnforcePhase(true);
+    sys.AddLink(link_gearAB);
 
-    // ===========================================================================================================================================================================================
-    // ======== F / T DEFINITION -> UNIVERSAL FORCE: RotorWinding - Stator ====================================================================================================================================
-    // ===========================================================================================================================================================================================
-    // ======== TORQUE TEMEPLATE ===========================================================================================================================================================================
-    // ChVector3d Torque_direction_RotorWinding_Stator(0, 1, 0); // IMPORTANT!! the direction vertex need to be normalized  
-    // double Torque_magnitude_RotorWinding_Stator = -0.0 * 1e3 * 1e3; //[Nm] converted to ([kg]-[mm]-[s]) 
-    // ChVector3d RotorWinding_Stator_Torque = Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
- 
-    
-    // ===========================================================================================================================================================================================
-    // ======== F / T DEFINITION -> TORSIONAL SPRING/DAMPER: RotorWinding - Stator ====================================================================================================================================
-    // ===========================================================================================================================================================================================
-    // ======== Torsional spring coefficient ===========================================================================================================================================================================
-    // double k_eq_RotorWinding_Stator_spr = 0.0; // [(N * m) / rad]
-    // k_eq_RotorWinding_Stator_spr = k_eq_RotorWinding_Stator_spr * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s]) 
-    // // ======== Torsional damping coefficient ===========================================================================================================================================================================
-    // double r_ShaftBushing_experimental = 0.0003; //[(N*m*s)/rad]
-    // double r_eq_RotorWinding_Stator_spr = r_ShaftBushing_experimental * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])  
-    // // ======== Torsional spring/damper implementation ===========================================================================================================================================================================
-    // auto RotorWinding_Stator_Torsional_Spring = chrono_types::make_shared<ChLinkRSDA>();
-    // AddVisualizationBall(sys, Stator_body->GetPos(), ChColor(0,0,1));
-    // ChVector3d RotorWinding_Stator_Torsional_Spring_Position(Rotor_body->GetPos());  //[mm] set the position in the 3D space of the link respect to the absolute frame
-    // //RotorWinding_Stator_Torsional_Spring_Position[2] += 6.0;  //[mm] Rise the position of the spring along y-axis in order to see it better in the animation
-    // ChQuaternion<> RotorWinding_Stator_Torsional_Spring_Orientation;
-    // RotorWinding_Stator_Torsional_Spring_Orientation.SetFromAngleAxis(90.0 * M_PI / 180.0, ChVector3d(0, 1, 0)); // !!! IMPORTANT !!! the Torsional Spring is oriented always arround Z-axis -> Set correctly the orientation 
-    // ChFrame<> RotorWinding_Stator_Torsional_Spring_Frame(RotorWinding_Stator_Torsional_Spring_Position, RotorWinding_Stator_Torsional_Spring_Orientation);
-    // RotorWinding_Stator_Torsional_Spring->Initialize(Rotor_body,                                   // Body 1  
-    //     Stator_body,                                  // Body 2 
-    //     false,                                        // the two following frames are in absolute, not relative, coords.
-    //     RotorWinding_Stator_Torsional_Spring_Frame,          // Location and orientation of the Body 1 frame 
-    //     RotorWinding_Stator_Torsional_Spring_Frame);         // Location and orientation of the Body 1 frame
-    // RotorWinding_Stator_Torsional_Spring->SetRestAngle(0.0 * (M_PI / 180.0)); //[rad] Starting angular position
-    // RotorWinding_Stator_Torsional_Spring->SetSpringCoefficient(k_eq_RotorWinding_Stator_spr); // [(kg mm mm)/(s^2 rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m/rad]
-    // RotorWinding_Stator_Torsional_Spring->SetDampingCoefficient(r_eq_RotorWinding_Stator_spr); // [(kg mm mm s)/(s^2 mm rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m s/rad]
-    // sys.AddLink(RotorWinding_Stator_Torsional_Spring);
-    // RotorWinding_Stator_Torsional_Spring->AddVisualShape(chrono_types::make_shared<ChVisualShapeRotSpring>(60, 50)); // var1 = radius of the spring, var2 = graphical resolution of the spring
-    // // ======== Torsional spring/damper visualization ===========================================================================================================================================================================
-    // auto RotorWinding_Stator_Spring_Visual = chrono_types::make_shared<ChVisualShapeRotSpring>(2.5, 70); // var1 = radius of the spring, var2 = graphical resolution of the spring
-    // RotorWinding_Stator_Spring_Visual->SetColor(ChColor(0.0f, 1.0f, 0.0f));  // RGB values
-    // RotorWinding_Stator_Torsional_Spring->AddVisualShape(RotorWinding_Stator_Spring_Visual); 
+    auto link_gearBC = chrono_types::make_shared<ChLinkLockGear>();
+    link_gearBC->Initialize(mbody_gearB, mbody_gearC, ChFrame<>());
+    link_gearBC->SetFrameShaft1(GetFramee(mbody_gearB));
+    link_gearBC->SetFrameShaft2(GetFramee(mbody_gearC));
+    link_gearBC->SetTransmissionRatio(1);
+    // link_gearBC->SetEnforcePhase(true);
+    sys.AddLink(link_gearBC);
 
-    // ===========================================================================================================================================================================================
-    // ======== MULTI-PHYSICS SIMULATION ===========================================================================================================================================================
-    // ===========================================================================================================================================================================================
-    
-    // ===========================================================================================================================================================================================
-    // ======== IRRLICHT VISUALIZATION SYSTEM ====================================================================================================================================================================
-    // ===========================================================================================================================================================================================
     auto vis = chrono_types::make_shared<ChVisualSystemIrrlicht>();
     vis->AttachSystem(&sys);
     vis->SetWindowSize(1200, 800);
@@ -569,7 +519,9 @@ int main(int argc, char* argv[]) {
         vis->BeginScene();
         vis->Render();
         vis->EndScene();
-
+        tools::drawCircle(vis.get(), 20, ChCoordsys<>(link_gearAB->GetMarker2()->GetAbsCoordsys().pos, QUNIT), ChColor(1,0,0));
+        // tools::drawCircle(vis.get(), 0.1, ChCoordsys<>(link_gearAD->GetMarker2()->GetAbsCoordsys().pos, QUNIT));
+        tools::drawCircle(vis.get(), 0.1, ChCoordsys<>(link_gearBC->GetMarker2()->GetAbsCoordsys().pos, QUNIT));
         // if (t_sampling_electronic_counter >= T_ToSample_electronic) {
         if (0) {
             // ======== EXECUTE -> the Electronic co-simulation process ====================================================================================================================================================================

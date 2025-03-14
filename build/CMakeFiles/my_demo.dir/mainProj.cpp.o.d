@@ -1,5 +1,5 @@
 CMakeFiles/my_demo.dir/mainProj.cpp.o: \
- /home/jamiul/Downloads/dynoMotor/mainProj.cpp /usr/include/stdc-predef.h \
+ /home/saad/Downloads/dynoMotor/mainProj.cpp /usr/include/stdc-predef.h \
  /usr/include/c++/14/iostream /usr/include/c++/14/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/os_defines.h \
@@ -466,12 +466,8 @@ CMakeFiles/my_demo.dir/mainProj.cpp.o: \
  /usr/include/eigen3/Eigen/src/Core/arch/AVX/PacketMath.h \
  /usr/include/eigen3/Eigen/src/Core/arch/AVX/TypeCasting.h \
  /usr/include/eigen3/Eigen/src/Core/arch/AVX/Complex.h \
- /usr/include/eigen3/Eigen/src/Core/arch/AVX512/PacketMath.h \
- /usr/include/eigen3/Eigen/src/Core/arch/AVX512/TypeCasting.h \
- /usr/include/eigen3/Eigen/src/Core/arch/AVX512/Complex.h \
  /usr/include/eigen3/Eigen/src/Core/arch/SSE/MathFunctions.h \
  /usr/include/eigen3/Eigen/src/Core/arch/AVX/MathFunctions.h \
- /usr/include/eigen3/Eigen/src/Core/arch/AVX512/MathFunctions.h \
  /usr/include/eigen3/Eigen/src/Core/arch/Default/Settings.h \
  /usr/include/eigen3/Eigen/src/Core/arch/Default/GenericPacketMathFunctions.h \
  /usr/include/eigen3/Eigen/src/Core/functors/TernaryFunctors.h \
