@@ -297,136 +297,61 @@ class RigidBody {
 
 int main(int argc, char* argv[]) {
     ChSystemNSC sys = GravetySetup();
-    // printf("Changed the obj names!!!\n\n");
-    RigidBody rotor_winding(sys, "RotorWinding_OBJ", 8900.00 / (1e9));
-    RigidBody shaft(sys, "Shaft_OBJ", 7850.00 / (1e9));
-    RigidBody stator(sys, "Stator_OBJ", 7850.00 / (1e9), true);
-
-    auto Shaft_body = shaft.GetBody();
-    // auto RotorWinding_body = rotor_winding.GetBody();
-    // auto Stator_body = stator.GetBody();
-
-    std::vector<std::string> file_names = {"" , // empty value to start with index 1
-        "../dynoObj/body_1_1",     // Part1_Motor
-        "../dynoObj/body_2_1",     // GearA_Driver
-        "../dynoObj/body_3_1",     // GearF
-        "../dynoObj/body_4_1",     // frame
-        "../dynoObj/body_5_1",     // GearB
-        "../dynoObj/body_6_1",     // GearC
-        "../dynoObj/body_7_1",     // GearD
-        "../dynoObj/body_8_1",     // GearE
-        "../dynoObj/body_9_1",     // Part2_flywheel
-        "../dynoObj/body_10_1"     // Part2_dyno
-    };
-    std::vector<std::unique_ptr<RigidBody>> bodies(file_names.size());
-    std::vector<std::shared_ptr<ChBody>> body_ptrs(file_names.size());
-    std::vector<ChVector3d> cogs(file_names.size());
-    std::vector<ChVector3d> positions = {ChVector3d(0,0,0),
-        ChVector3d(-153.681408502864,232.071341649174,257.256405065421),
-        ChVector3d(-153.681408502864,316.571341649174,257.256405065421),
-        ChVector3d(-153.681408502864,-62.0286583508263,257.256405065421),
-        ChVector3d(10.0501781487224,127.271341649174,219.573424974887),
-        ChVector3d(-183.793091163963,320.571341649174,254.366929798653),
-        ChVector3d(-213.749821851278,320.571341649174,280.873424974888),
-        ChVector3d(-213.749821851277,-66.0286583508263,280.873424974888),
-        ChVector3d(-183.793091163963,-66.0286583508263,254.366929798653),
-        ChVector3d(-213.749821851277,127.271341649174,280.873424974888),
-        ChVector3d(-153.681408502864,15.4713416491736,257.256405065421)
-    };
-    std::vector<ChQuaternion<>> rotss = { ChQuaternion<>(0.0,0.0,0.0,0.0),
-        ChQuaternion<>(0.344860417986101,-0.344860417986101,0.617309721376921,0.617309721376921),
-        ChQuaternion<>(0.69219181681608,-0.69219181681608,0.144466220040721,0.144466220040721),
-        ChQuaternion<>(0.682163121105785,0.682163121105785,0.186154441803611,-0.186154441803611),
-        ChQuaternion<>(1,0,0,0),
-        ChQuaternion<>(0.590890270601115,0.590890270601115,0.388392440849382,-0.388392440849382),
-        ChQuaternion<>(-0.0817797748423181,-0.0817797748423181,0.702361778876627,-0.702361778876627),
-        ChQuaternion<>(0.707106781186548,-0.707106781186547,-8.1335083852247e-17,0),
-        ChQuaternion<>(-0.227257494306092,0.227257494306092,0.669592436696918,0.669592436696918),
-        ChQuaternion<>(0.661716586109785,0.661716586109785,-0.249261227765594,0.249261227765594),
-        ChQuaternion<>(0.679959230544171,0.679959230544171,0.194050108986773,-0.194050108986773)
-    };
-    // Initialize RigidBody objects and store values (starting from index 1)
-    bodies[1] = std::make_unique<RigidBody>(sys, file_names[1], 7850.00 / (1e9), true);
-    bodies[2] = std::make_unique<RigidBody>(sys, file_names[2], 785000.00 / (1e9));bodies[2]->HideBody();
-    bodies[3] = std::make_unique<RigidBody>(sys, file_names[3], 7850.00 / (1e9), true);
-    bodies[4] = std::make_unique<RigidBody>(sys, file_names[4], 7850.00 / (1e9), true);
-    bodies[5] = std::make_unique<RigidBody>(sys, file_names[5], 7850.00 / (1e9), true);bodies[5]->setColor(ChColor(0,1,0));bodies[5]->HideBody();
-    bodies[6] = std::make_unique<RigidBody>(sys, file_names[6], 7850.00 / (1e9), true);bodies[6]->HideBody();
-    bodies[7] = std::make_unique<RigidBody>(sys, file_names[7], 7850.00 / (1e9), true);
-    bodies[8] = std::make_unique<RigidBody>(sys, file_names[8], 7850.00 / (1e9), true);
-    bodies[9] = std::make_unique<RigidBody>(sys, file_names[9], 7850.00 / (1e9), true);
-    bodies[10] = std::make_unique<RigidBody>(sys, file_names[10], 7850.00 / (1e9), true);
-    for (size_t i = 1; i < file_names.size(); ++i) {
-        body_ptrs[i] = bodies[i]->GetBody();
-        cogs[i] = bodies[i]->GetCOG();
-        body_ptrs[i]->SetPos(positions[i] - positions[4]);
-        body_ptrs[i]->SetRot(rotss[i]);
-        if(i==1)bodies[1]->setColor(ChColor(1,0,0));
-    }
-    auto Stator_body = body_ptrs[1];
-    auto Rotor_body = body_ptrs[2];
-    auto Frame_body = body_ptrs[4];
-
-    double radA = 10, radB = 20, radC = 20;
-    double gearLen = 5;
-    double gearDen = 1000;
-    // Contact material shared among all bodies
+    
     auto mat = chrono_types::make_shared<ChContactMaterialNSC>();
-    // Shared visualization material
     auto vis_mat = chrono_types::make_shared<ChVisualMaterial>();
     vis_mat->SetKdTexture(GetChronoDataFile("textures/pinkwhite.png"));
 
-    auto mbody_gearA = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radA, gearLen, gearDen, true, false, mat);
+    // Create all the rigid bodies.
+    double radA = 2;
+    double radB = 4;
+
+    // ...the truss
+    auto mbody_truss = chrono_types::make_shared<ChBodyEasyBox>(20, 10, 2, 1000, true, false, mat);
+    sys.Add(mbody_truss);
+    mbody_truss->SetFixed(true);
+    mbody_truss->SetPos(ChVector3d(0, 0, 3));
+
+    // ...the first gear
+    auto mbody_gearA = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Y, radA, 0.5, 1000, true, false, mat);
     sys.Add(mbody_gearA);
-    mbody_gearA->SetPos(positions[2]-positions[4]+ChVector3d(0,5,0));
+    mbody_gearA->SetPos(ChVector3d(0, 0, -1));
     mbody_gearA->SetRot(QuatFromAngleX(CH_PI_2));
     mbody_gearA->GetVisualShape(0)->SetMaterial(0, vis_mat);
-
-    auto mbody_gearB = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radB, gearLen, gearDen, true, false, mat);
+    // ...the second gear
+    double interaxis12 = radA + radB;
+    auto mbody_gearB = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Y, radB, 0.4, 1000, true, false, mat);
     sys.Add(mbody_gearB);
-    mbody_gearB->SetPos(positions[5]-positions[4]);
+    mbody_gearB->SetPos(ChVector3d(interaxis12, 0, -1));
     mbody_gearB->SetRot(QuatFromAngleX(CH_PI_2));
     mbody_gearB->GetVisualShape(0)->SetMaterial(0, vis_mat);
 
-    auto mbody_gearC = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radC, gearLen, gearDen, true, false, mat);
-    sys.Add(mbody_gearC);
-    mbody_gearC->SetPos(positions[6]-positions[4]);
-    mbody_gearC->SetRot(QuatFromAngleX(CH_PI_2));
-    mbody_gearC->GetVisualShape(0)->SetMaterial(0, vis_mat);
-
-    // CreateJoint(sys, Frame_body, Stator_body, JointType::FIXED, ChVector3d(1, 0, 0));
-    CreateJoint(sys, Rotor_body, Stator_body, JointType::REVOLUTE, ChVector3d(1, 0, 0));
-    // CreateJoint(sys, mbody_gearA, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0));
-    CreateJoint(sys, mbody_gearB, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0));
-    CreateJoint(sys, mbody_gearC, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0));
-
     // ...impose rotation speed between the first gear and the fixed truss
-    int motorSpeed = 10;
-    ChVector3d jointPos(mbody_gearA->GetPos());
-    ChQuaternion<> jointOr;
-    jointOr.SetFromAngleAxis(90.0 * (CH_PI / 180.0), ChVector3d(1, 0, 0));    
-    ChFrame<> jointFrame(jointPos, jointOr);
     auto link_motor = chrono_types::make_shared<ChLinkMotorRotationSpeed>();
-    link_motor->Initialize(mbody_gearA, Frame_body, GetFramee(mbody_gearA));
-    link_motor->SetSpeedFunction(chrono_types::make_shared<ChFunctionConst>(motorSpeed));
-    sys.AddLink(link_motor);   
+    link_motor->Initialize(mbody_gearA, mbody_truss, ChFrame<>(ChVector3d(0, 0, 0), QUNIT));
+    link_motor->SetSpeedFunction(chrono_types::make_shared<ChFunctionConst>(6));
+    sys.AddLink(link_motor);
+    // ... the second gear is fixed to the rotating bar
+    auto link_revolute = chrono_types::make_shared<ChLinkLockRevolute>();
+    link_revolute->Initialize(mbody_gearB, mbody_truss, ChFrame<>(ChVector3d(interaxis12, 0, 0), QUNIT));
+    sys.AddLink(link_revolute);
 
     auto link_gearAB = chrono_types::make_shared<ChLinkLockGear>();
     link_gearAB->Initialize(mbody_gearA, mbody_gearB, ChFrame<>());
-    link_gearAB->SetFrameShaft1(GetFramee(mbody_gearA));
-    link_gearAB->SetFrameShaft2(GetFramee(mbody_gearB));
+    link_gearAB->SetFrameShaft1(ChFrame<>(VNULL, chrono::QuatFromAngleX(-CH_PI_2)));
+    link_gearAB->SetFrameShaft2(ChFrame<>(VNULL, chrono::QuatFromAngleX(-CH_PI_2)));
     link_gearAB->SetTransmissionRatio(radA / radB);
-    link_gearAB->SetEpicyclic(true);
-    // link_gearAB->SetEnforcePhase(true);
+    link_gearAB->SetEnforcePhase(true);
     sys.AddLink(link_gearAB);
 
+    double radC = 2 * radB + radA;
     auto link_gearBC = chrono_types::make_shared<ChLinkLockGear>();
-    link_gearBC->Initialize(mbody_gearB, mbody_gearC, ChFrame<>());
-    link_gearBC->SetFrameShaft1(GetFramee(mbody_gearB));
-    link_gearBC->SetFrameShaft2(GetFramee(mbody_gearC));
-    link_gearBC->SetTransmissionRatio(1);
-    // link_gearBC->SetEnforcePhase(true);
-    sys.AddLink(link_gearBC);
+    link_gearBC->Initialize(mbody_gearB, mbody_truss, ChFrame<>());
+    link_gearBC->SetFrameShaft1(ChFrame<>(VNULL, chrono::QuatFromAngleX(-CH_PI_2)));
+    link_gearBC->SetFrameShaft2(ChFrame<>(ChVector3d(0, 0, -4), QUNIT));
+    link_gearBC->SetTransmissionRatio(radB / radC);
+    link_gearBC->SetEpicyclic(true);  // <-- this means: use a wheel with internal teeth!
+    // sys.AddLink(link_gearBC);
 
     auto vis = chrono_types::make_shared<ChVisualSystemIrrlicht>();
     vis->AttachSystem(&sys);
@@ -435,7 +360,7 @@ int main(int argc, char* argv[]) {
     vis->Initialize();
     vis->AddLogo();
     vis->AddSkyBox();
-    vis->AddCamera(ChVector3d(-300, -150, -300));
+    vis->AddCamera(ChVector3d(10,20,0));
     vis->AddLight(ChVector3d(300.f, 300.f, -300.f), 3000, ChColor(0.1f, 0.1f, 0.1f));
     vis->AddLight(ChVector3d(300.f, 300.f, 300.f), 3000, ChColor(0.1f, 0.1f, 0.1f));
     vis->EnableBodyFrameDrawing(true);
@@ -464,9 +389,6 @@ int main(int argc, char* argv[]) {
     double T_sampling_electronic = t_step_mechanic;                         // Time window of the electronic (SPICE) simulation
     double t_step_electronic = 1.0e-5;//1.0e-6; // [s]                                  Discretization of the electronic time window
 
-    // ===========================================================================================================================================================================================
-    // ======== INITIALIZE THE ELECTRONIC CIRCUIT ====================================================================================================================================================================
-    // ===========================================================================================================================================================================================
     std::string Netlist_location = "../data/my_project/SPICE/Circuit_Netlist.cir";   
     
     ChElectronicGeneric Generic_Circuit(Netlist_location, t_step_electronic); 
@@ -494,10 +416,6 @@ int main(int argc, char* argv[]) {
 
     Generic_Circuit.InputDefinition(PWLIn, FlowIn);
 
-    // ===========================================================================================================================================================================================
-    // ======== MULTI-PHYSICS CO-SYMULATION LOOP ====================================================================================================================================================================
-    // ===========================================================================================================================================================================================
-    // ======== SET -> the Multi-physics timeline ====================================================================================================================================================================
     double t_simulation_STOP = 10.0;//400.0e-3; //[s]
     double t_sim_mechanics = 0.0; //[s] 
     double t_sim_electronics = 0.0; //[s]
@@ -510,7 +428,7 @@ int main(int argc, char* argv[]) {
     std::cout << "======= AsASfsadfsdfsadfsadfsadfsadfsadfasdfsadfasdfasdfsadfsadf =======" << "\n"; 
     std::cout << "===================================================" << "\n";
     std::cout << "\n";
-    // system("pause>0");
+    
     double T_PWM = 0.04; //[s] PWM Period
     double Duty_PWM = 100.0 / 100; //[s] PWM Duty
     double t_PWM_counter = 0.0; //[s] PWM Period
@@ -519,97 +437,13 @@ int main(int argc, char* argv[]) {
         vis->BeginScene();
         vis->Render();
         vis->EndScene();
+
         tools::drawCircle(vis.get(), 20, ChCoordsys<>(link_gearAB->GetMarker2()->GetAbsCoordsys().pos, QUNIT), ChColor(1,0,0));
-        // tools::drawCircle(vis.get(), 0.1, ChCoordsys<>(link_gearAD->GetMarker2()->GetAbsCoordsys().pos, QUNIT));
         tools::drawCircle(vis.get(), 0.1, ChCoordsys<>(link_gearBC->GetMarker2()->GetAbsCoordsys().pos, QUNIT));
-        // if (t_sampling_electronic_counter >= T_ToSample_electronic) {
-        if (0) {
-            // ======== EXECUTE -> the Electronic co-simulation process ====================================================================================================================================================================
 
-            Generic_Circuit.Advance(t_step_mechanic);
-
-
-            auto res1 = Generic_Circuit.GetResult();
-             // ======== COMPUTE -> the Mechanics ====================================================================================================================================================================
-            
-            ChVector3d Rotor_Euler_Vel = Rotor_body->GetAngVelLocal(); // Get the effective euler angular velocity 
-            
-            // ======== COMPUTE -> the Multiphysics ====================================================================================================================================================================
-            double ke_motor = -0.022446; //[Nm/A]
-            double Vbackemf = ke_motor * Rotor_Euler_Vel[0];
-            Imotor = res1[toLowerCase("VmotorVAR")].back();
-
-            // ======== UPDATE -> the Electronic parameters ====================================================================================================================================================================
-            if (t_sim_mechanics >= 0.0){
-                if (t_PWM_counter <= T_PWM * Duty_PWM)
-                {
-                    PWLIn["VpwmVAR"] = 12.0;
-                    t_PWM_counter += t_step_mechanic;
-                }
-                else
-                {
-                    PWLIn["VpwmVAR"] = 0.0;
-                    t_PWM_counter += t_step_mechanic;
-                }
-                if (t_PWM_counter > T_PWM)
-                {
-                    t_PWM_counter = 0.0;
-                }
-
-            }
-            PWLIn["VmotorVAR"] = Vbackemf;
-            Generic_Circuit.InputDefinition(PWLIn, FlowIn);
-
-            // ======== SAVE -> the needed variables ====================================================================================================================================================================
-            OutputMap["n1"].push_back(res1["n1"].back());
-            OutputMap["n3"].push_back(res1["n3"].back());
-            OutputMap["VmotorVAR"].push_back(res1[toLowerCase("VmotorVAR")].back());
-            OutputMap["t_electronics"].push_back(t_sim_mechanics);
-            OutputMap["dalpha"].push_back(-Rotor_Euler_Vel[0]);
-
-            // ======== UPDATE -> the TIME variables ====================================================================================================================================================================
-            t_sampling_electronic_counter = 0;      // The variable is nulled to re-start with the counter for the next call of the electronic domain
-        }
-
-        // ======== EXTRACT -> Kinematic variables ====================================================================================================================================================================
-        // std::vector<double> Rotor_Euler_Ang = GetEulerAngPos(Rotor_body, t_step_mechanic);
-
-        // // ======== TORQUE TEMEPLATE ====================================================================================================================================================================
-        // // ======== UPDATE -> Forces and Torques: RotorWinding - Stator ====================================================================================================================================================================
-        // double kt_motor = 0.022446; //[Nm/A] 150
-        // Torque_magnitude_RotorWinding_Stator = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])    
-        // RotorWinding_Stator_Torque = -1.0 * Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
-        // Rotor_body->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
-        // Rotor_body->AccumulateTorque(RotorWinding_Stator_Torque, false); // Apply to the body the force
-        
-        // // ======== SAVE -> the needed variables ====================================================================================================================================================================
-        // OutputMap["alpha"].push_back(-Rotor_Euler_Ang[0]);
-        // OutputMap["t_mechanics"].push_back(t_sim_mechanics);
-        // // OutputMap["T_magnetic"].push_back(-1.0 * Torque_magnitude_Cam_Magnet);
-        // OutputMap["T_motor"].push_back(-1.0 * Torque_magnitude_RotorWinding_Stator);
-
-        // // ======== RUN -> the Mechanic solver ====================================================================================================================================
         sys.DoStepDynamics(t_step_mechanic);
         realtime_timer.Spin(t_step_mechanic);
-
-        // // ======== UPDATE -> the Multi-physics timeline ====================================================================================================================================
-        // t_sampling_electronic_counter += t_step_mechanic;
-        // t_sim_electronics += t_step_mechanic;
-        // t_sim_mechanics += t_step_mechanic;
     }
-
-    // ===========================================================================================================================================================================================
-    // ======== EXPORT THE RESULTS INTO A JSON FILE ====================================================================================================================================
-    // ===========================================================================================================================================================================================
-    // json j; // Create a json object to contain the output data
-    // for (const auto& item : OutputMap) { // Populate the JSON object with data
-    //     j[item.first] = item.second;
-    // }
-    // // Export the output data in a .json file
-    // std::ofstream out_file("output.json");
-    // out_file << j.dump(4); // "4" is the indentation parameter, you can change it to have a more or less readable structure
-    // out_file.close();
-    // std::cout << "Data exported to 'output.json'" << std::endl;
 
     return 0;
 }

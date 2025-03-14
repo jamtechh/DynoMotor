@@ -297,7 +297,7 @@ class RigidBody {
 
 int main(int argc, char* argv[]) {
     ChSystemNSC sys = GravetySetup();
-    // printf("Changed the obj names!!!\n\n");
+    
     RigidBody rotor_winding(sys, "RotorWinding_OBJ", 8900.00 / (1e9));
     RigidBody shaft(sys, "Shaft_OBJ", 7850.00 / (1e9));
     RigidBody stator(sys, "Stator_OBJ", 7850.00 / (1e9), true);
