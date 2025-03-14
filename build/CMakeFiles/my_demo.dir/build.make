@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/saad/Downloads/DCMotorModel1/my_project
+CMAKE_SOURCE_DIR = /home/jamiul/Downloads/dynoMotor
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/saad/Downloads/DCMotorModel1/my_project_build
+CMAKE_BINARY_DIR = /home/jamiul/Downloads/dynoMotor/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/my_demo.dir/depend.make
@@ -70,18 +70,18 @@ include CMakeFiles/my_demo.dir/progress.make
 include CMakeFiles/my_demo.dir/flags.make
 
 CMakeFiles/my_demo.dir/mainProj.cpp.o: CMakeFiles/my_demo.dir/flags.make
-CMakeFiles/my_demo.dir/mainProj.cpp.o: /home/saad/Downloads/DCMotorModel1/my_project/mainProj.cpp
+CMakeFiles/my_demo.dir/mainProj.cpp.o: /home/jamiul/Downloads/dynoMotor/mainProj.cpp
 CMakeFiles/my_demo.dir/mainProj.cpp.o: CMakeFiles/my_demo.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/saad/Downloads/DCMotorModel1/my_project_build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/my_demo.dir/mainProj.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/my_demo.dir/mainProj.cpp.o -MF CMakeFiles/my_demo.dir/mainProj.cpp.o.d -o CMakeFiles/my_demo.dir/mainProj.cpp.o -c /home/saad/Downloads/DCMotorModel1/my_project/mainProj.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/jamiul/Downloads/dynoMotor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/my_demo.dir/mainProj.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/my_demo.dir/mainProj.cpp.o -MF CMakeFiles/my_demo.dir/mainProj.cpp.o.d -o CMakeFiles/my_demo.dir/mainProj.cpp.o -c /home/jamiul/Downloads/dynoMotor/mainProj.cpp
 
 CMakeFiles/my_demo.dir/mainProj.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/my_demo.dir/mainProj.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/saad/Downloads/DCMotorModel1/my_project/mainProj.cpp > CMakeFiles/my_demo.dir/mainProj.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/jamiul/Downloads/dynoMotor/mainProj.cpp > CMakeFiles/my_demo.dir/mainProj.cpp.i
 
 CMakeFiles/my_demo.dir/mainProj.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/my_demo.dir/mainProj.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/saad/Downloads/DCMotorModel1/my_project/mainProj.cpp -o CMakeFiles/my_demo.dir/mainProj.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/jamiul/Downloads/dynoMotor/mainProj.cpp -o CMakeFiles/my_demo.dir/mainProj.cpp.s
 
 # Object files for target my_demo
 my_demo_OBJECTS = \
@@ -90,30 +90,22 @@ my_demo_OBJECTS = \
 # External object files for target my_demo
 my_demo_EXTERNAL_OBJECTS =
 
-my_demo: CMakeFiles/my_demo.dir/mainProj.cpp.o
-my_demo: CMakeFiles/my_demo.dir/build.make
-my_demo: /usr/lib/gcc/x86_64-linux-gnu/14/libgomp.so
-my_demo: /usr/lib/x86_64-linux-gnu/libpthread.a
-my_demo: /usr/lib/x86_64-linux-gnu/libmkl_rt.so
-my_demo: /usr/lib/x86_64-linux-gnu/libiomp5.so
-my_demo: /usr/local/lib/libChronoEngine_postprocess.so
-my_demo: /usr/local/lib/libChronoEngine_pardisomkl.so
-my_demo: /usr/local/lib/libChronoEngine_postprocess.so
-my_demo: /usr/local/lib/libChronoEngine_powerelectronics.so
-my_demo: /usr/local/lib/libChronoEngine_irrlicht.so
-my_demo: /usr/local/lib/libChronoModels_robot.so
-my_demo: /usr/local/lib/libChronoEngine.so
-my_demo: /usr/local/lib/libChronoEngine_pardisomkl.so
-my_demo: /usr/local/lib/libChronoEngine_powerelectronics.so
-my_demo: /usr/local/lib/libChronoEngine_irrlicht.so
-my_demo: /usr/local/lib/libChronoModels_robot.so
-my_demo: /usr/local/lib/libChronoEngine.so
-my_demo: CMakeFiles/my_demo.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/saad/Downloads/DCMotorModel1/my_project_build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable my_demo"
+bin/my_demo: CMakeFiles/my_demo.dir/mainProj.cpp.o
+bin/my_demo: CMakeFiles/my_demo.dir/build.make
+bin/my_demo: /usr/lib/gcc/x86_64-linux-gnu/14/libgomp.so
+bin/my_demo: /usr/lib/x86_64-linux-gnu/libpthread.a
+bin/my_demo: /usr/local/lib/libChronoEngine_postprocess.so
+bin/my_demo: /usr/local/lib/libChronoEngine_postprocess.so
+bin/my_demo: /usr/local/lib/libChronoEngine_powerelectronics.so
+bin/my_demo: /usr/local/lib/libChronoEngine_irrlicht.so
+bin/my_demo: /usr/local/lib/libChronoModels_robot.so
+bin/my_demo: /usr/local/lib/libChronoEngine.so
+bin/my_demo: CMakeFiles/my_demo.dir/link.txt
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/jamiul/Downloads/dynoMotor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable bin/my_demo"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/my_demo.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
-CMakeFiles/my_demo.dir/build: my_demo
+CMakeFiles/my_demo.dir/build: bin/my_demo
 .PHONY : CMakeFiles/my_demo.dir/build
 
 CMakeFiles/my_demo.dir/clean:
@@ -121,6 +113,6 @@ CMakeFiles/my_demo.dir/clean:
 .PHONY : CMakeFiles/my_demo.dir/clean
 
 CMakeFiles/my_demo.dir/depend:
-	cd /home/saad/Downloads/DCMotorModel1/my_project_build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/saad/Downloads/DCMotorModel1/my_project /home/saad/Downloads/DCMotorModel1/my_project /home/saad/Downloads/DCMotorModel1/my_project_build /home/saad/Downloads/DCMotorModel1/my_project_build /home/saad/Downloads/DCMotorModel1/my_project_build/CMakeFiles/my_demo.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/jamiul/Downloads/dynoMotor/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/jamiul/Downloads/dynoMotor /home/jamiul/Downloads/dynoMotor /home/jamiul/Downloads/dynoMotor/build /home/jamiul/Downloads/dynoMotor/build /home/jamiul/Downloads/dynoMotor/build/CMakeFiles/my_demo.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/my_demo.dir/depend
 

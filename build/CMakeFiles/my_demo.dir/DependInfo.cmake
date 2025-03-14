@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/saad/Downloads/DCMotorModel1/my_project/mainProj.cpp" "CMakeFiles/my_demo.dir/mainProj.cpp.o" "gcc" "CMakeFiles/my_demo.dir/mainProj.cpp.o.d"
+  "/home/jamiul/Downloads/dynoMotor/mainProj.cpp" "CMakeFiles/my_demo.dir/mainProj.cpp.o" "gcc" "CMakeFiles/my_demo.dir/mainProj.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
