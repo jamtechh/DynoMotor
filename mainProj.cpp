@@ -160,6 +160,15 @@ void AddAxis(ChSystemNSC& sys, const ChVector3d& position, float x = 2, float y 
     x_axis->GetVisualShape(0)->SetColor(color); // Red color
     sys.Add(x_axis);
 }
+void AddCylAxis(ChSystemNSC& sys, const ChVector3d& position, ChQuaternion<> jointOrientation, float rad = 2.5, float len = 100, const ChColor& color = ChColor(0.0f, 0.0f, 1.0f)){
+    auto axisShape = chrono_types::make_shared<ChVisualShapeCylinder>(rad, len); // Radius = 2, Length = 50
+    axisShape->SetColor(color);
+    auto axisBody = chrono_types::make_shared<ChBody>();
+    axisBody->SetPos(position);
+    axisBody->SetFixed(true); // The axis is just for visualization
+    axisBody->AddVisualShape(axisShape, ChFrame<>(ChVector3d(0, 0, 0), jointOrientation));
+    sys.Add(axisBody);
+}
 void CreateJoint(std::shared_ptr<ChBody> bodyA, std::shared_ptr<ChBody> bodyB, ChSystemNSC& sys, JointType jointType, bool showAxis = false) {
     ChVector3d jointPosition(bodyA->GetPos());
 
@@ -342,7 +351,7 @@ int main(int argc, char* argv[]) {
     };
     // Initialize RigidBody objects and store values (starting from index 1)
     bodies[1] = std::make_unique<RigidBody>(sys, file_names[1], 7850.00 / (1e9));
-    bodies[2] = std::make_unique<RigidBody>(sys, file_names[2], 7850.00 / (1e9));
+    bodies[2] = std::make_unique<RigidBody>(sys, file_names[2], 785000.00 / (1e9));
     bodies[3] = std::make_unique<RigidBody>(sys, file_names[3], 7850.00 / (1e9), true);
     bodies[4] = std::make_unique<RigidBody>(sys, file_names[4], 7850.00 / (1e9), true);
     bodies[5] = std::make_unique<RigidBody>(sys, file_names[5], 7850.00 / (1e9), true);
@@ -367,7 +376,7 @@ int main(int argc, char* argv[]) {
     ChVector3d RotorWinding_Shaft_Link_Position(body_ptrs[4]->GetPos());   // [mm] set the position in the 3D space of the link respect to the absolute frame
     //RotorWinding_Shaft_Link_Position[2] = RotorWinding_Shaft_Link_Position[2] + 7.0;  
     ChQuaternion<> RotorWinding_Shaft_Link_Orientation;
-    RotorWinding_Shaft_Link_Orientation.SetFromAngleAxis(0.0 * (M_PI / 180.0), ChVector3d(0, 1, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
+    RotorWinding_Shaft_Link_Orientation.SetFromAngleAxis(0.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Shaft_Link_Frame(RotorWinding_Shaft_Link_Position, RotorWinding_Shaft_Link_Orientation);
     auto RotorWinding_Shaft_Link_Fixed = chrono_types::make_shared<ChLinkLockLock>();
     RotorWinding_Shaft_Link_Fixed->Initialize(body_ptrs[4],                      // Body 1  
@@ -378,16 +387,19 @@ int main(int argc, char* argv[]) {
     // ===========================================================================================================================================================================================
     // ======== LINK DEFINITION -> REVOLUTE JOINT: RotorWinding - Stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
+    
+    AddVisualizationBall(sys, RotorWinding_body->GetPos());
     ChVector3d RotorWinding_Stator_Link_Position(RotorWinding_body->GetPos());            // [mm] set the position in the 3D space of the link respect to the absolute frame
     //RotorWinding_Stator_Link_Position[2] = RotorWinding_Stator_Link_Position[2] + 7.0;
     ChQuaternion<> RotorWinding_Stator_Link_Orientation;
-    RotorWinding_Stator_Link_Orientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(0, 1, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
+    RotorWinding_Stator_Link_Orientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Stator_Link_Frame(RotorWinding_Stator_Link_Position, RotorWinding_Stator_Link_Orientation);
     auto RotorWinding_Stator_Link_Revolute = chrono_types::make_shared<ChLinkLockRevolute>();
     RotorWinding_Stator_Link_Revolute->Initialize(RotorWinding_body,                      // Body 1  
         Stator_body,                     // Body 2  
         RotorWinding_Stator_Link_Frame);        // Location and orientation of the frame  
     sys.AddLink(RotorWinding_Stator_Link_Revolute);
+    AddCylAxis(sys, RotorWinding_body->GetPos(), RotorWinding_Stator_Link_Orientation);
 
     // ===========================================================================================================================================================================================
     // ======== DYNAMIC FORCES AND TORQUES CRATION ================================================================================================================================================
@@ -397,7 +409,7 @@ int main(int argc, char* argv[]) {
     // ======== F / T DEFINITION -> UNIVERSAL FORCE: RotorWinding - Stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
     // ======== TORQUE TEMEPLATE ===========================================================================================================================================================================
-    ChVector3d Torque_direction_RotorWinding_Stator(1, 0, 0); // IMPORTANT!! the direction vertex need to be normalized  
+    ChVector3d Torque_direction_RotorWinding_Stator(0, 1, 0); // IMPORTANT!! the direction vertex need to be normalized  
     double Torque_magnitude_RotorWinding_Stator = -0.0 * 1e3 * 1e3; //[Nm] converted to ([kg]-[mm]-[s]) 
     ChVector3d RotorWinding_Stator_Torque = Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
  
@@ -413,7 +425,8 @@ int main(int argc, char* argv[]) {
     double r_eq_RotorWinding_Stator_spr = r_ShaftBushing_experimental * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])  
     // ======== Torsional spring/damper implementation ===========================================================================================================================================================================
     auto RotorWinding_Stator_Torsional_Spring = chrono_types::make_shared<ChLinkRSDA>();
-    ChVector3d RotorWinding_Stator_Torsional_Spring_Position(Stator_body->GetPos());  //[mm] set the position in the 3D space of the link respect to the absolute frame
+    AddVisualizationBall(sys, Stator_body->GetPos(), ChColor(0,0,1));
+    ChVector3d RotorWinding_Stator_Torsional_Spring_Position(RotorWinding_body->GetPos());  //[mm] set the position in the 3D space of the link respect to the absolute frame
     //RotorWinding_Stator_Torsional_Spring_Position[2] += 6.0;  //[mm] Rise the position of the spring along y-axis in order to see it better in the animation
     ChQuaternion<> RotorWinding_Stator_Torsional_Spring_Orientation;
     RotorWinding_Stator_Torsional_Spring_Orientation.SetFromAngleAxis(90.0 * M_PI / 180.0, ChVector3d(0, 1, 0)); // !!! IMPORTANT !!! the Torsional Spring is oriented always arround Z-axis -> Set correctly the orientation 
@@ -524,7 +537,7 @@ int main(int argc, char* argv[]) {
     std::cout << "\n";
     // system("pause>0");
     double T_PWM = 0.04; //[s] PWM Period
-    double Duty_PWM = 85.0 / 100; //[s] PWM Duty
+    double Duty_PWM = 100.0 / 100; //[s] PWM Duty
     double t_PWM_counter = 0.0; //[s] PWM Period
 
     while (t_sim_mechanics < t_simulation_STOP && brake_flag == 1) {
