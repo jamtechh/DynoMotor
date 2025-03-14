@@ -297,21 +297,21 @@ int main(int argc, char* argv[]) {
     RigidBody shaft(sys, "Shaft_OBJ", 7850.00 / (1e9));
     RigidBody stator(sys, "Stator_OBJ", 7850.00 / (1e9), true);
 
-    auto RotorWinding_body = rotor_winding.GetBody();
     auto Shaft_body = shaft.GetBody();
-    auto Stator_body = stator.GetBody();
+    // auto RotorWinding_body = rotor_winding.GetBody();
+    // auto Stator_body = stator.GetBody();
 
     std::vector<std::string> file_names = {"" , // empty value to start with index 1
-        "../dynoObj/body_1_1",     // ("Part1-Motor");
-        "../dynoObj/body_2_1",     // ("GearA");
-        "../dynoObj/body_3_1",     // ("GearF");
-        "../dynoObj/body_4_1",     // ("frame");
-        "../dynoObj/body_5_1",     // ("GearB");
-        "../dynoObj/body_6_1",     // ("GearC");
-        "../dynoObj/body_7_1",     // ("GearD");
-        "../dynoObj/body_8_1",     // ("GearE");
-        "../dynoObj/body_9_1",     // ("Part2_flywheel");
-        "../dynoObj/body_10_1"     // ("Part2_dyno");
+        "../dynoObj/body_1_1",     // Part1_Motor
+        "../dynoObj/body_2_1",     // GearA_Driver
+        "../dynoObj/body_3_1",     // GearF
+        "../dynoObj/body_4_1",     // frame
+        "../dynoObj/body_5_1",     // GearB
+        "../dynoObj/body_6_1",     // GearC
+        "../dynoObj/body_7_1",     // GearD
+        "../dynoObj/body_8_1",     // GearE
+        "../dynoObj/body_9_1",     // Part2_flywheel
+        "../dynoObj/body_10_1"     // Part2_dyno
     };
     std::vector<std::unique_ptr<RigidBody>> bodies(file_names.size());
     std::vector<std::shared_ptr<ChBody>> body_ptrs(file_names.size());
@@ -358,31 +358,34 @@ int main(int argc, char* argv[]) {
         body_ptrs[i]->SetRot(rotss[i]);
         if(i==1)bodies[1]->setColor(ChColor(1,0,0));
     }
+    auto Stator_body = body_ptrs[1];
+    auto RotorWinding_body = body_ptrs[2];
+
     // ===========================================================================================================================================================================================
     // ======== LINK DEFINITION -> FIXED JOINT: frame - stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
-    ChVector3d RotorWinding_Shaft_Link_Position(bodies[1]->getPos());   // [mm] set the position in the 3D space of the link respect to the absolute frame
+    ChVector3d RotorWinding_Shaft_Link_Position(body_ptrs[4]->GetPos());   // [mm] set the position in the 3D space of the link respect to the absolute frame
     //RotorWinding_Shaft_Link_Position[2] = RotorWinding_Shaft_Link_Position[2] + 7.0;  
     ChQuaternion<> RotorWinding_Shaft_Link_Orientation;
     RotorWinding_Shaft_Link_Orientation.SetFromAngleAxis(0.0 * (M_PI / 180.0), ChVector3d(0, 1, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Shaft_Link_Frame(RotorWinding_Shaft_Link_Position, RotorWinding_Shaft_Link_Orientation);
     auto RotorWinding_Shaft_Link_Fixed = chrono_types::make_shared<ChLinkLockLock>();
     RotorWinding_Shaft_Link_Fixed->Initialize(body_ptrs[4],                      // Body 1  
-        body_ptrs[1],                     // Body 2  
+        Stator_body,                     // Body 2  
         RotorWinding_Shaft_Link_Frame);        // Location and orientation of the frame   
     sys.AddLink(RotorWinding_Shaft_Link_Fixed);
 
     // ===========================================================================================================================================================================================
-    // ======== LINK DEFINITION -> REVOLUTE JOINT: stator - driverGearA ====================================================================================================================================
+    // ======== LINK DEFINITION -> REVOLUTE JOINT: RotorWinding - Stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
-    ChVector3d RotorWinding_Stator_Link_Position(body_ptrs[2]->GetPos());            // [mm] set the position in the 3D space of the link respect to the absolute frame
+    ChVector3d RotorWinding_Stator_Link_Position(RotorWinding_body->GetPos());            // [mm] set the position in the 3D space of the link respect to the absolute frame
     //RotorWinding_Stator_Link_Position[2] = RotorWinding_Stator_Link_Position[2] + 7.0;
     ChQuaternion<> RotorWinding_Stator_Link_Orientation;
     RotorWinding_Stator_Link_Orientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(0, 1, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Stator_Link_Frame(RotorWinding_Stator_Link_Position, RotorWinding_Stator_Link_Orientation);
     auto RotorWinding_Stator_Link_Revolute = chrono_types::make_shared<ChLinkLockRevolute>();
-    RotorWinding_Stator_Link_Revolute->Initialize(body_ptrs[2],                      // Body 1  
-        body_ptrs[1],                     // Body 2  
+    RotorWinding_Stator_Link_Revolute->Initialize(RotorWinding_body,                      // Body 1  
+        Stator_body,                     // Body 2  
         RotorWinding_Stator_Link_Frame);        // Location and orientation of the frame  
     sys.AddLink(RotorWinding_Stator_Link_Revolute);
 
