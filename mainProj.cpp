@@ -171,7 +171,6 @@ void AddCylAxis(ChSystemNSC& sys, const ChVector3d& position, ChQuaternion<> joi
 }
 void CreateJoint(ChSystemNSC& sys, std::shared_ptr<ChBody> bodyA, std::shared_ptr<ChBody> bodyB, JointType jointType, const ChVector3d& orinn, bool showAxis = false) {
     ChVector3d jointPosition(bodyA->GetPos());
-
     ChQuaternion<> jointOrientation;
     jointOrientation.SetFromAngleAxis(90.0 * (CH_PI / 180.0), orinn);    
     ChFrame<> jointFrame(jointPosition, jointOrientation);
@@ -184,13 +183,17 @@ void CreateJoint(ChSystemNSC& sys, std::shared_ptr<ChBody> bodyA, std::shared_pt
         default:    throw std::invalid_argument("Invalid joint type.");
     }
 
-    ChQuaternion<> jointOrientation;
-    jointOrientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
-    ChFrame<> jointFrame(jointPosition, jointOrientation);
     Joint->Initialize(bodyA, bodyB, jointFrame);  
     sys.AddLink(Joint);
     
     if(showAxis)AddCylAxis(sys, bodyA->GetPos(), jointOrientation);
+}
+ChFrame<> GetFramee(std::shared_ptr<ChBody> body, const ChVector3d& orinn = ChVector3d(1, 0, 0)){
+    ChVector3d jointPos(body->GetPos());
+    ChQuaternion<> jointOr;
+    jointOr.SetFromAngleAxis(90.0 * (CH_PI / 180.0), orinn);    
+    ChFrame<> jointFrame(jointPos, jointOr);
+    return jointFrame;
 }
 
 class RigidBody {
@@ -343,12 +346,12 @@ int main(int argc, char* argv[]) {
         ChQuaternion<>(0.679959230544171,0.679959230544171,0.194050108986773,-0.194050108986773)
     };
     // Initialize RigidBody objects and store values (starting from index 1)
-    bodies[1] = std::make_unique<RigidBody>(sys, file_names[1], 7850.00 / (1e9));
-    bodies[2] = std::make_unique<RigidBody>(sys, file_names[2], 785000.00 / (1e9));
+    bodies[1] = std::make_unique<RigidBody>(sys, file_names[1], 7850.00 / (1e9), true);
+    bodies[2] = std::make_unique<RigidBody>(sys, file_names[2], 785000.00 / (1e9));bodies[2]->HideBody();
     bodies[3] = std::make_unique<RigidBody>(sys, file_names[3], 7850.00 / (1e9), true);
     bodies[4] = std::make_unique<RigidBody>(sys, file_names[4], 7850.00 / (1e9), true);
     bodies[5] = std::make_unique<RigidBody>(sys, file_names[5], 7850.00 / (1e9), true);bodies[5]->setColor(ChColor(0,1,0));bodies[5]->HideBody();
-    bodies[6] = std::make_unique<RigidBody>(sys, file_names[6], 7850.00 / (1e9), true);
+    bodies[6] = std::make_unique<RigidBody>(sys, file_names[6], 7850.00 / (1e9), true);bodies[6]->HideBody();
     bodies[7] = std::make_unique<RigidBody>(sys, file_names[7], 7850.00 / (1e9), true);
     bodies[8] = std::make_unique<RigidBody>(sys, file_names[8], 7850.00 / (1e9), true);
     bodies[9] = std::make_unique<RigidBody>(sys, file_names[9], 7850.00 / (1e9), true);
@@ -361,38 +364,11 @@ int main(int argc, char* argv[]) {
         if(i==1)bodies[1]->setColor(ChColor(1,0,0));
     }
     auto Stator_body = body_ptrs[1];
-    auto RotorWinding_body = body_ptrs[2];
+    auto Rotor_body = body_ptrs[2];
+    auto Frame_body = body_ptrs[4];
 
-    // ===========================================================================================================================================================================================
-    // ======== LINK DEFINITION -> FIXED JOINT: frame - stator ====================================================================================================================================
-    // ===========================================================================================================================================================================================
-    ChVector3d RotorWinding_Shaft_Link_Position(body_ptrs[4]->GetPos()); 
-    ChQuaternion<> RotorWinding_Shaft_Link_Orientation;
-    RotorWinding_Shaft_Link_Orientation.SetFromAngleAxis(0.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
-    ChFrame<> RotorWinding_Shaft_Link_Frame(RotorWinding_Shaft_Link_Position, RotorWinding_Shaft_Link_Orientation);
-    auto RotorWinding_Shaft_Link_Fixed = chrono_types::make_shared<ChLinkLockLock>();
-    RotorWinding_Shaft_Link_Fixed->Initialize(body_ptrs[4], Stator_body, RotorWinding_Shaft_Link_Frame);   
-    sys.AddLink(RotorWinding_Shaft_Link_Fixed);
-
-    // ===========================================================================================================================================================================================
-    // ======== LINK DEFINITION -> REVOLUTE JOINT: RotorWinding - Stator ====================================================================================================================================
-    // ===========================================================================================================================================================================================
-    
-    AddVisualizationBall(sys, RotorWinding_body->GetPos());
-
-    ChVector3d RotorWinding_Stator_Link_Position(RotorWinding_body->GetPos());
-    ChQuaternion<> RotorWinding_Stator_Link_Orientation;
-    RotorWinding_Stator_Link_Orientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
-    ChFrame<> RotorWinding_Stator_Link_Frame(RotorWinding_Stator_Link_Position, RotorWinding_Stator_Link_Orientation);
-    auto RotorWinding_Stator_Link_Revolute = chrono_types::make_shared<ChLinkLockRevolute>();
-    RotorWinding_Stator_Link_Revolute->Initialize(RotorWinding_body, Stator_body, RotorWinding_Stator_Link_Frame);  
-    sys.AddLink(RotorWinding_Stator_Link_Revolute);
-
-    AddCylAxis(sys, RotorWinding_body->GetPos(), RotorWinding_Stator_Link_Orientation);
-
-    double radA = 20;
-    double radB = 4;
-    double gearLen = 1;
+    double radA = 10, radB = 20, radC = 20;
+    double gearLen = 5;
     double gearDen = 1000;
     // Contact material shared among all bodies
     auto mat = chrono_types::make_shared<ChContactMaterialNSC>();
@@ -404,34 +380,51 @@ int main(int argc, char* argv[]) {
     // ======== LINK DEFINITION -> REVOLUTE JOINT: GearB - Frame ====================================================================================================================================
     // ===========================================================================================================================================================================================
     
-    auto mbody_gearB = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radA, gearLen, gearDen, true, false, mat);
+    auto mbody_gearA = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radA, gearLen, gearDen, true, false, mat);
+    sys.Add(mbody_gearA);
+    mbody_gearA->SetPos(positions[2]-positions[4]);
+    mbody_gearA->SetRot(QuatFromAngleX(CH_PI_2));
+    mbody_gearA->GetVisualShape(0)->SetMaterial(0, vis_mat);
+
+    auto mbody_gearB = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radB, gearLen, gearDen, true, false, mat);
     sys.Add(mbody_gearB);
     mbody_gearB->SetPos(positions[5]-positions[4]);
     mbody_gearB->SetRot(QuatFromAngleX(CH_PI_2));
     mbody_gearB->GetVisualShape(0)->SetMaterial(0, vis_mat);
 
-    auto mbody_gearC = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radA, gearLen, gearDen, true, false, mat);
+    auto mbody_gearC = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, radC, gearLen, gearDen, true, false, mat);
     sys.Add(mbody_gearC);
     mbody_gearC->SetPos(positions[6]-positions[4]);
     mbody_gearC->SetRot(QuatFromAngleX(CH_PI_2));
     mbody_gearC->GetVisualShape(0)->SetMaterial(0, vis_mat);
-    // for aesthetic reasons, also add a thin cylinder only as a visualization:
-    // auto mshaft_shape = chrono_types::make_shared<ChVisualShapeCylinder>(10, 100);
-    // mbody_gearC->AddVisualShape(mshaft_shape, ChFrame<>(positions[5]-positions[4], RotorWinding_Stator_Link_Orientation));
 
-    // AddVisualizationBall(sys, body_ptrs[5]->GetPos());
+    // CreateJoint(sys, Frame_body, Stator_body, JointType::FIXED, ChVector3d(1, 0, 0));
+    CreateJoint(sys, Rotor_body, Stator_body, JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
+    CreateJoint(sys, mbody_gearA, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
+    CreateJoint(sys, mbody_gearB, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
+    CreateJoint(sys, mbody_gearC, Frame_body, JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
 
-    // ChVector3d GearB_Frame_Link_Position(mbody_gearB->GetPos());
-    // ChQuaternion<> GearB_Frame_Link_Orientation;
-    // GearB_Frame_Link_Orientation.SetFromAngleAxis(90.0 * (M_PI / 180.0), ChVector3d(1, 0, 0));       // !!! IMPORTANT !!! the Revolute is always arround Z-axis -> Set correctly the orientation 
-    // ChFrame<> GearB_Frame_Link_Frame(GearB_Frame_Link_Position, GearB_Frame_Link_Orientation);
-    // auto GearB_Frame_Link_Revolute = chrono_types::make_shared<ChLinkLockRevolute>();
-    // GearB_Frame_Link_Revolute->Initialize(mbody_gearB, body_ptrs[4], GearB_Frame_Link_Frame);  
-    // sys.AddLink(GearB_Frame_Link_Revolute);
-    
-    // AddCylAxis(sys, mbody_gearB->GetPos(), GearB_Frame_Link_Orientation);
+    ChQuaternion<> jointOr;
+    jointOr.SetFromAngleAxis(-90.0 * (CH_PI / 180.0), ChVector3d(1, 0, 0));   
 
-    CreateJoint(sys, mbody_gearB, body_ptrs[4], JointType::REVOLUTE, ChVector3d(1, 0, 0), true);
+    auto link_gearAB = chrono_types::make_shared<ChLinkLockGear>();
+    link_gearAB->Initialize(mbody_gearA, mbody_gearB, ChFrame<>());
+    link_gearAB->SetFrameShaft1(GetFramee(mbody_gearA));
+    link_gearAB->SetFrameShaft2(ChFrame<>(mbody_gearB->GetPos(), jointOr));
+    link_gearAB->SetTransmissionRatio(radA / radB);
+    // link_gearAB->SetEnforcePhase(true);
+    sys.AddLink(link_gearAB);
+
+    // ...impose rotation speed between the first gear and the fixed truss
+    int motorSpeed = -10;
+    ChVector3d jointPos(mbody_gearA->GetPos());
+    // ChQuaternion<> jointOr;
+    jointOr.SetFromAngleAxis(90.0 * (CH_PI / 180.0), ChVector3d(1, 0, 0));    
+    ChFrame<> jointFrame(jointPos, jointOr);
+    auto link_motor = chrono_types::make_shared<ChLinkMotorRotationSpeed>();
+    link_motor->Initialize(mbody_gearA, Frame_body, GetFramee(mbody_gearA));
+    link_motor->SetSpeedFunction(chrono_types::make_shared<ChFunctionConst>(motorSpeed));
+    sys.AddLink(link_motor);
 
     // ===========================================================================================================================================================================================
     // ======== DYNAMIC FORCES AND TORQUES CRATION ================================================================================================================================================
@@ -441,42 +434,42 @@ int main(int argc, char* argv[]) {
     // ======== F / T DEFINITION -> UNIVERSAL FORCE: RotorWinding - Stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
     // ======== TORQUE TEMEPLATE ===========================================================================================================================================================================
-    ChVector3d Torque_direction_RotorWinding_Stator(0, 1, 0); // IMPORTANT!! the direction vertex need to be normalized  
-    double Torque_magnitude_RotorWinding_Stator = -0.0 * 1e3 * 1e3; //[Nm] converted to ([kg]-[mm]-[s]) 
-    ChVector3d RotorWinding_Stator_Torque = Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
+    // ChVector3d Torque_direction_RotorWinding_Stator(0, 1, 0); // IMPORTANT!! the direction vertex need to be normalized  
+    // double Torque_magnitude_RotorWinding_Stator = -0.0 * 1e3 * 1e3; //[Nm] converted to ([kg]-[mm]-[s]) 
+    // ChVector3d RotorWinding_Stator_Torque = Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
  
     
     // ===========================================================================================================================================================================================
     // ======== F / T DEFINITION -> TORSIONAL SPRING/DAMPER: RotorWinding - Stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
     // ======== Torsional spring coefficient ===========================================================================================================================================================================
-    double k_eq_RotorWinding_Stator_spr = 0.0; // [(N * m) / rad]
-    k_eq_RotorWinding_Stator_spr = k_eq_RotorWinding_Stator_spr * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s]) 
-    // ======== Torsional damping coefficient ===========================================================================================================================================================================
-    double r_ShaftBushing_experimental = 0.0003; //[(N*m*s)/rad]
-    double r_eq_RotorWinding_Stator_spr = r_ShaftBushing_experimental * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])  
-    // ======== Torsional spring/damper implementation ===========================================================================================================================================================================
-    auto RotorWinding_Stator_Torsional_Spring = chrono_types::make_shared<ChLinkRSDA>();
-    AddVisualizationBall(sys, Stator_body->GetPos(), ChColor(0,0,1));
-    ChVector3d RotorWinding_Stator_Torsional_Spring_Position(RotorWinding_body->GetPos());  //[mm] set the position in the 3D space of the link respect to the absolute frame
-    //RotorWinding_Stator_Torsional_Spring_Position[2] += 6.0;  //[mm] Rise the position of the spring along y-axis in order to see it better in the animation
-    ChQuaternion<> RotorWinding_Stator_Torsional_Spring_Orientation;
-    RotorWinding_Stator_Torsional_Spring_Orientation.SetFromAngleAxis(90.0 * M_PI / 180.0, ChVector3d(0, 1, 0)); // !!! IMPORTANT !!! the Torsional Spring is oriented always arround Z-axis -> Set correctly the orientation 
-    ChFrame<> RotorWinding_Stator_Torsional_Spring_Frame(RotorWinding_Stator_Torsional_Spring_Position, RotorWinding_Stator_Torsional_Spring_Orientation);
-    RotorWinding_Stator_Torsional_Spring->Initialize(RotorWinding_body,                                   // Body 1  
-        Stator_body,                                  // Body 2 
-        false,                                        // the two following frames are in absolute, not relative, coords.
-        RotorWinding_Stator_Torsional_Spring_Frame,          // Location and orientation of the Body 1 frame 
-        RotorWinding_Stator_Torsional_Spring_Frame);         // Location and orientation of the Body 1 frame
-    RotorWinding_Stator_Torsional_Spring->SetRestAngle(0.0 * (M_PI / 180.0)); //[rad] Starting angular position
-    RotorWinding_Stator_Torsional_Spring->SetSpringCoefficient(k_eq_RotorWinding_Stator_spr); // [(kg mm mm)/(s^2 rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m/rad]
-    RotorWinding_Stator_Torsional_Spring->SetDampingCoefficient(r_eq_RotorWinding_Stator_spr); // [(kg mm mm s)/(s^2 mm rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m s/rad]
-    sys.AddLink(RotorWinding_Stator_Torsional_Spring);
-    RotorWinding_Stator_Torsional_Spring->AddVisualShape(chrono_types::make_shared<ChVisualShapeRotSpring>(60, 50)); // var1 = radius of the spring, var2 = graphical resolution of the spring
-    // ======== Torsional spring/damper visualization ===========================================================================================================================================================================
-    auto RotorWinding_Stator_Spring_Visual = chrono_types::make_shared<ChVisualShapeRotSpring>(2.5, 70); // var1 = radius of the spring, var2 = graphical resolution of the spring
-    RotorWinding_Stator_Spring_Visual->SetColor(ChColor(0.0f, 1.0f, 0.0f));  // RGB values
-    RotorWinding_Stator_Torsional_Spring->AddVisualShape(RotorWinding_Stator_Spring_Visual); 
+    // double k_eq_RotorWinding_Stator_spr = 0.0; // [(N * m) / rad]
+    // k_eq_RotorWinding_Stator_spr = k_eq_RotorWinding_Stator_spr * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s]) 
+    // // ======== Torsional damping coefficient ===========================================================================================================================================================================
+    // double r_ShaftBushing_experimental = 0.0003; //[(N*m*s)/rad]
+    // double r_eq_RotorWinding_Stator_spr = r_ShaftBushing_experimental * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])  
+    // // ======== Torsional spring/damper implementation ===========================================================================================================================================================================
+    // auto RotorWinding_Stator_Torsional_Spring = chrono_types::make_shared<ChLinkRSDA>();
+    // AddVisualizationBall(sys, Stator_body->GetPos(), ChColor(0,0,1));
+    // ChVector3d RotorWinding_Stator_Torsional_Spring_Position(Rotor_body->GetPos());  //[mm] set the position in the 3D space of the link respect to the absolute frame
+    // //RotorWinding_Stator_Torsional_Spring_Position[2] += 6.0;  //[mm] Rise the position of the spring along y-axis in order to see it better in the animation
+    // ChQuaternion<> RotorWinding_Stator_Torsional_Spring_Orientation;
+    // RotorWinding_Stator_Torsional_Spring_Orientation.SetFromAngleAxis(90.0 * M_PI / 180.0, ChVector3d(0, 1, 0)); // !!! IMPORTANT !!! the Torsional Spring is oriented always arround Z-axis -> Set correctly the orientation 
+    // ChFrame<> RotorWinding_Stator_Torsional_Spring_Frame(RotorWinding_Stator_Torsional_Spring_Position, RotorWinding_Stator_Torsional_Spring_Orientation);
+    // RotorWinding_Stator_Torsional_Spring->Initialize(Rotor_body,                                   // Body 1  
+    //     Stator_body,                                  // Body 2 
+    //     false,                                        // the two following frames are in absolute, not relative, coords.
+    //     RotorWinding_Stator_Torsional_Spring_Frame,          // Location and orientation of the Body 1 frame 
+    //     RotorWinding_Stator_Torsional_Spring_Frame);         // Location and orientation of the Body 1 frame
+    // RotorWinding_Stator_Torsional_Spring->SetRestAngle(0.0 * (M_PI / 180.0)); //[rad] Starting angular position
+    // RotorWinding_Stator_Torsional_Spring->SetSpringCoefficient(k_eq_RotorWinding_Stator_spr); // [(kg mm mm)/(s^2 rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m/rad]
+    // RotorWinding_Stator_Torsional_Spring->SetDampingCoefficient(r_eq_RotorWinding_Stator_spr); // [(kg mm mm s)/(s^2 mm rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m s/rad]
+    // sys.AddLink(RotorWinding_Stator_Torsional_Spring);
+    // RotorWinding_Stator_Torsional_Spring->AddVisualShape(chrono_types::make_shared<ChVisualShapeRotSpring>(60, 50)); // var1 = radius of the spring, var2 = graphical resolution of the spring
+    // // ======== Torsional spring/damper visualization ===========================================================================================================================================================================
+    // auto RotorWinding_Stator_Spring_Visual = chrono_types::make_shared<ChVisualShapeRotSpring>(2.5, 70); // var1 = radius of the spring, var2 = graphical resolution of the spring
+    // RotorWinding_Stator_Spring_Visual->SetColor(ChColor(0.0f, 1.0f, 0.0f));  // RGB values
+    // RotorWinding_Stator_Torsional_Spring->AddVisualShape(RotorWinding_Stator_Spring_Visual); 
 
     // ===========================================================================================================================================================================================
     // ======== MULTI-PHYSICS SIMULATION ===========================================================================================================================================================
@@ -572,17 +565,13 @@ int main(int argc, char* argv[]) {
     double Duty_PWM = 100.0 / 100; //[s] PWM Duty
     double t_PWM_counter = 0.0; //[s] PWM Period
 
-    while (t_sim_mechanics < t_simulation_STOP && brake_flag == 1) {
-        // ======== RUN -> the Irrlicht visualizer ====================================================================================================================================================================
-        vis->Run();
-        //tools::drawGrid(vis.get(), 2, 2, 30, 30, ChCoordsys<>(ChVector3d(0, 0.01, 0), QuatFromAngleX(CH_PI_2)),ChColor(0.3f, 0.3f, 0.3f), true);
-        if (vis->Run()) { brake_flag = 1; } // Check if the User wanted to stop de simulation before: t_simulation_STOP
-        else { brake_flag = 0; }
+    while (vis->Run()) {
         vis->BeginScene();
         vis->Render();
         vis->EndScene();
 
-        if (t_sampling_electronic_counter >= T_ToSample_electronic) {
+        // if (t_sampling_electronic_counter >= T_ToSample_electronic) {
+        if (0) {
             // ======== EXECUTE -> the Electronic co-simulation process ====================================================================================================================================================================
 
             Generic_Circuit.Advance(t_step_mechanic);
@@ -591,7 +580,7 @@ int main(int argc, char* argv[]) {
             auto res1 = Generic_Circuit.GetResult();
              // ======== COMPUTE -> the Mechanics ====================================================================================================================================================================
             
-            ChVector3d Rotor_Euler_Vel = RotorWinding_body->GetAngVelLocal(); // Get the effective euler angular velocity 
+            ChVector3d Rotor_Euler_Vel = Rotor_body->GetAngVelLocal(); // Get the effective euler angular velocity 
             
             // ======== COMPUTE -> the Multiphysics ====================================================================================================================================================================
             double ke_motor = -0.022446; //[Nm/A]
@@ -631,50 +620,44 @@ int main(int argc, char* argv[]) {
         }
 
         // ======== EXTRACT -> Kinematic variables ====================================================================================================================================================================
-        std::vector<double> Rotor_Euler_Ang = GetEulerAngPos(RotorWinding_body, t_step_mechanic);
+        // std::vector<double> Rotor_Euler_Ang = GetEulerAngPos(Rotor_body, t_step_mechanic);
 
-        // ======== TORQUE TEMEPLATE ====================================================================================================================================================================
-        // ======== UPDATE -> Forces and Torques: RotorWinding - Stator ====================================================================================================================================================================
-        double kt_motor = 0.022446; //[Nm/A] 150
-        Torque_magnitude_RotorWinding_Stator = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])    
-        RotorWinding_Stator_Torque = -1.0 * Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
-        RotorWinding_body->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
-        RotorWinding_body->AccumulateTorque(RotorWinding_Stator_Torque, false); // Apply to the body the force
+        // // ======== TORQUE TEMEPLATE ====================================================================================================================================================================
+        // // ======== UPDATE -> Forces and Torques: RotorWinding - Stator ====================================================================================================================================================================
+        // double kt_motor = 0.022446; //[Nm/A] 150
+        // Torque_magnitude_RotorWinding_Stator = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])    
+        // RotorWinding_Stator_Torque = -1.0 * Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
+        // Rotor_body->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
+        // Rotor_body->AccumulateTorque(RotorWinding_Stator_Torque, false); // Apply to the body the force
         
-        // ======== SAVE -> the needed variables ====================================================================================================================================================================
-        OutputMap["alpha"].push_back(-Rotor_Euler_Ang[0]);
-        OutputMap["t_mechanics"].push_back(t_sim_mechanics);
-        // OutputMap["T_magnetic"].push_back(-1.0 * Torque_magnitude_Cam_Magnet);
-        OutputMap["T_motor"].push_back(-1.0 * Torque_magnitude_RotorWinding_Stator);
+        // // ======== SAVE -> the needed variables ====================================================================================================================================================================
+        // OutputMap["alpha"].push_back(-Rotor_Euler_Ang[0]);
+        // OutputMap["t_mechanics"].push_back(t_sim_mechanics);
+        // // OutputMap["T_magnetic"].push_back(-1.0 * Torque_magnitude_Cam_Magnet);
+        // OutputMap["T_motor"].push_back(-1.0 * Torque_magnitude_RotorWinding_Stator);
 
-        // ======== RUN -> the Mechanic solver ====================================================================================================================================
+        // // ======== RUN -> the Mechanic solver ====================================================================================================================================
         sys.DoStepDynamics(t_step_mechanic);
         realtime_timer.Spin(t_step_mechanic);
 
-        // ======== UPDATE -> the Multi-physics timeline ====================================================================================================================================
-        t_sampling_electronic_counter += t_step_mechanic;
-        t_sim_electronics += t_step_mechanic;
-        t_sim_mechanics += t_step_mechanic;
+        // // ======== UPDATE -> the Multi-physics timeline ====================================================================================================================================
+        // t_sampling_electronic_counter += t_step_mechanic;
+        // t_sim_electronics += t_step_mechanic;
+        // t_sim_mechanics += t_step_mechanic;
     }
 
     // ===========================================================================================================================================================================================
     // ======== EXPORT THE RESULTS INTO A JSON FILE ====================================================================================================================================
     // ===========================================================================================================================================================================================
-    json j; // Create a json object to contain the output data
-    for (const auto& item : OutputMap) { // Populate the JSON object with data
-        j[item.first] = item.second;
-    }
-    // Export the output data in a .json file
-    std::ofstream out_file("output.json");
-    out_file << j.dump(4); // "4" is the indentation parameter, you can change it to have a more or less readable structure
-    out_file.close();
-    std::cout << "Data exported to 'output.json'" << std::endl;
-
-    // ===========================================================================================================================================================================================
-    // ======== CLOSE THE MULTI-PHYSICS CO-SIMULATION LOOP ====================================================================================================================================
-    // ===========================================================================================================================================================================================
-    // system("pause>0"); // Pause the execution of the code to see the results onto the cmd terminal
+    // json j; // Create a json object to contain the output data
+    // for (const auto& item : OutputMap) { // Populate the JSON object with data
+    //     j[item.first] = item.second;
+    // }
+    // // Export the output data in a .json file
+    // std::ofstream out_file("output.json");
+    // out_file << j.dump(4); // "4" is the indentation parameter, you can change it to have a more or less readable structure
+    // out_file.close();
+    // std::cout << "Data exported to 'output.json'" << std::endl;
 
     return 0;
-    //;
 }
