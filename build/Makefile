@@ -153,6 +153,30 @@ mainProj.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/mainProj.cpp.s
 .PHONY : mainProj.cpp.s
 
+objInfo1.o: objInfo1.cpp.o
+.PHONY : objInfo1.o
+
+# target to build an object file
+objInfo1.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.o
+.PHONY : objInfo1.cpp.o
+
+objInfo1.i: objInfo1.cpp.i
+.PHONY : objInfo1.i
+
+# target to preprocess a source file
+objInfo1.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.i
+.PHONY : objInfo1.cpp.i
+
+objInfo1.s: objInfo1.cpp.s
+.PHONY : objInfo1.s
+
+# target to generate assembly for a file
+objInfo1.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.s
+.PHONY : objInfo1.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -165,6 +189,9 @@ help:
 	@echo "... mainProj.o"
 	@echo "... mainProj.i"
 	@echo "... mainProj.s"
+	@echo "... objInfo1.o"
+	@echo "... objInfo1.i"
+	@echo "... objInfo1.s"
 .PHONY : help
 
 

@@ -81,12 +81,12 @@ clean: CMakeFiles/my_demo.dir/clean
 CMakeFiles/my_demo.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/jamiul/Downloads/dynoMotor/build/CMakeFiles --progress-num=1,2 "Built target my_demo"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/jamiul/Downloads/dynoMotor/build/CMakeFiles --progress-num=1,2,3 "Built target my_demo"
 .PHONY : CMakeFiles/my_demo.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/my_demo.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/jamiul/Downloads/dynoMotor/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/jamiul/Downloads/dynoMotor/build/CMakeFiles 3
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/my_demo.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/jamiul/Downloads/dynoMotor/build/CMakeFiles 0
 .PHONY : CMakeFiles/my_demo.dir/rule

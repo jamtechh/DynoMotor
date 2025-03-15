@@ -1,6 +1,7 @@
 CMakeFiles/my_demo.dir/mainProj.cpp.o: \
  /home/jamiul/Downloads/dynoMotor/mainProj.cpp /usr/include/stdc-predef.h \
- /usr/include/c++/14/iostream /usr/include/c++/14/bits/requires_hosted.h \
+ /home/jamiul/Downloads/dynoMotor/objInfo1.h /usr/include/c++/14/iostream \
+ /usr/include/c++/14/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/os_defines.h \
  /usr/include/features.h /usr/include/features-time64.h \

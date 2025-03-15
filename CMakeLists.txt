@@ -147,8 +147,8 @@ endif()
 # files in your project. 
 #--------------------------------------------------------------
 
-add_executable(my_demo mainProj.cpp)
-
+add_executable(my_demo mainProj.cpp objInfo1.cpp)
+message("\n\n\n\n\n\n added objinfo file success !!!!!!!!!")
 #--------------------------------------------------------------
 # Set properties for your executable target
 # 
