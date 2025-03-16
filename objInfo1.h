@@ -3,6 +3,7 @@
 #define OBJINFO1_H
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <cstring>
@@ -57,13 +58,14 @@ using namespace irr::io;
 using namespace irr::gui;
 
 // Declare global variables (they will be defined in objInfo1.cpp)
+extern std::vector<std::string> file_locations;
 extern std::vector<std::string> file_names;
 extern std::vector<ChVector3d> positions;
 extern std::vector<ChQuaternion<>> rotss;
 extern std::vector<ChVector3d> inertiaXX;
 extern std::vector<double> mass;
 
-extern std::vector<std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3d, double>> objData;
+extern std::vector<std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3d, double, std::string>> objData;
 
 extern ChVector3d posOffset;
 

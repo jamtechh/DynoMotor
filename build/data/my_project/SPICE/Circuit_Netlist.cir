@@ -1,38 +1,20 @@
 !!!! CIURCUIT !!!!
 Lmotor n2 n3 {parLmotor}
 VmotorVAR n2 n1 PWL(0 0 1e-9 0)
+*VmotorVAR n2 n1 DC 12
 Rmotor n3 0 {parRmotor}
 VpwmVAR1 n1 0 PWL(0 0 1e-9 0)
+*VpwmVAR1 n1 0 DC 12
 X1 0 n1 1PS79SB30
 .param parRmotor=120
 .param parLmotor=0.3
 .ic V(n1)=0
-**********MODELS**********
-*****MODEL1*****
-*
-*******************************************
 *
 *1PS79SB30
-*
 *NXP Semiconductors
-*
 *Schottky barrier diode
-*
-*
-*
-*
 *IFSM = 1A    @ tp = 8,3ms
 *VF   = 600mV @ IF = 200mA
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
 *Package pinning does not match Spice model pinning.
 *Package: SOD523
 *

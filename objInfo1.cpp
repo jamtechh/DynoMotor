@@ -1,5 +1,5 @@
 #include "objInfo1.h"
-std::vector<std::string> file_names = {"" , // empty value to start with index 1
+std::vector<std::string> file_locations = {"" , // empty value to start with index 1
     "../dynoObj/body_1_1",     // Part1_Motor
     "../dynoObj/body_2_1",     // GearA_Driver_Motor
     "../dynoObj/body_3_1",     // GearF_Driven_Dyno
@@ -11,6 +11,20 @@ std::vector<std::string> file_names = {"" , // empty value to start with index 1
     "../dynoObj/body_9_1",     // Part2_flywheel
     "../dynoObj/body_10_1"     // Part2_dyno
 };
+
+std::vector<std::string> file_names = {"" , // empty value to start with index 1
+    "Part1_Motor",     
+    "GearA_Dr",     
+    "GearF_Drvn",     
+    "frame",     
+    "GearB",     
+    "GearC",     
+    "GearD",     
+    "GearE",     
+    "Part2_flywheel",     
+    "Part2_dyno1"     
+};
+
 std::vector<ChVector3d> positions = {ChVector3d(0,0,0),
     ChVector3d(-153.681408502864,232.071341649174,257.256405065421),
     ChVector3d(-153.681408502864,320,257.256405065421),
@@ -38,7 +52,7 @@ std::vector<ChQuaternion<>> rotss = { ChQuaternion<>(0.0,0.0,0.0,0.0),
 
 std::vector<ChVector3d> inertiaXX = {ChVector3d(0,0,0),
     ChVector3d(5.77976073009449,7.96307088073259,9.73060284283223),
-    ChVector3d(0.0245232834116315,0.0348513174025659,0.0220932767457664),
+    ChVector3d(.0245232834116315,.0348513174025659,.0220932767457664),
     ChVector3d(0.0260120055120133,0.0333625953021842,0.0220932767457664),
     ChVector3d(29568.9201124321,45865.3318996888,73541.0736970342),
     ChVector3d(1.09268072169601,0.695141740951902,0.603909758681937),
@@ -63,18 +77,18 @@ std::vector<double> mass = {0.0,
 };
 
 
-std::vector<std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3d, double>> objData = {
-    {file_names[0], positions[0], rotss[0], inertiaXX[0], mass[0]},  // First row is null
-    {file_names[1], positions[1], rotss[1], inertiaXX[1], mass[1]},
-    {file_names[2], positions[2], rotss[2], inertiaXX[2], mass[2]},
-    {file_names[3], positions[3], rotss[3], inertiaXX[3], mass[3]},
-    {file_names[4], positions[4], rotss[4], inertiaXX[4], mass[4]},
-    {file_names[5], positions[5], rotss[5], inertiaXX[5], mass[5]},
-    {file_names[6], positions[6], rotss[6], inertiaXX[6], mass[6]},
-    {file_names[7], positions[7], rotss[7], inertiaXX[7], mass[7]},
-    {file_names[8], positions[8], rotss[8], inertiaXX[8], mass[8]},
-    {file_names[9], positions[9], rotss[9], inertiaXX[9], mass[9]},
-    {file_names[10], positions[10], rotss[10], inertiaXX[10], mass[10]}
+std::vector<std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3d, double, std::string>> objData = {
+    {file_locations[0], positions[0], rotss[0], inertiaXX[0], mass[0], file_names[0]},
+    {file_locations[1], positions[1], rotss[1], inertiaXX[1], mass[1], file_names[1]},
+    {file_locations[2], positions[2], rotss[2], inertiaXX[2], mass[2], file_names[2]},
+    {file_locations[3], positions[3], rotss[3], inertiaXX[3], mass[3], file_names[3]},
+    {file_locations[4], positions[4], rotss[4], inertiaXX[4], mass[4], file_names[4]},
+    {file_locations[5], positions[5], rotss[5], inertiaXX[5], mass[5], file_names[5]},
+    {file_locations[6], positions[6], rotss[6], inertiaXX[6], mass[6], file_names[6]},
+    {file_locations[7], positions[7], rotss[7], inertiaXX[7], mass[7], file_names[7]},
+    {file_locations[8], positions[8], rotss[8], inertiaXX[8], mass[8], file_names[8]},
+    {file_locations[9], positions[9], rotss[9], inertiaXX[9], mass[9], file_names[9]},
+    {file_locations[10], positions[10], rotss[10], inertiaXX[10], mass[10], file_names[10]}
 };
 
 ChVector3d posOffset =  positions[4];
