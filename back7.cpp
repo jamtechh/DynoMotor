@@ -1,66 +1,4 @@
 #include "objInfo1.h"
-// ======== Method: allows to put in pause the execution for sec ==============================================================================================================================================
-void sleep(int seconds) {
-    std::this_thread::sleep_for(std::chrono::seconds(seconds)); 
-}
-
-// ======== Method: allows to read a .json file ==============================================================================================================================================
-bool readJsonFile(const std::string& filename, json& j) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error opening JSON file." << std::endl;
-        return false;
-    }
-    file >> j;
-    return true;
-}
-
-// ======== Method: allows to write into a .json file ==============================================================================================================================================
-auto writeJsonFile(const std::string& filename, json data)
-{
-    // Specify the file name
-    std::string fileName = "Sim_Res/" + filename + ".json";
-    // Open a file stream for writing
-    std::ofstream file(fileName);
-    // Check if the file stream is open
-    if (!file.is_open()) {
-        std::cerr << "Error opening file for writing!" << std::endl;
-        return 1;
-    }
-    // Write the JSON object to the file
-    file << data.dump(4); // Pretty print with indentation of 4 spaces
-    // Close the file stream
-    file.close();
-    std::cout << "\n!!!!! Results exported to: " << fileName << " !!!!!\n";
-}
-
-// ======== Class: allows to compute the derivative in-between a single simulation time-step through the numerical differentiation method ==============================================================================================================================================
-class NumericalDifferentiation {
-public:
-    double Differentiate(double& dt, double& f_new)
-    {
-        f_new1 = f_new;
-        dt1 = dt;
-        if (flag == 0)
-        {
-            Derivative_res = 0.0;
-            f_old1 = f_new1;
-            flag = 1;
-        }
-        else
-        {
-            Derivative_res = (f_new1 - f_old1) / dt1;
-            f_old1 = f_new1;
-        }
-        return Derivative_res;
-    }
-private:
-    double Derivative_res = 0.0;
-    double f_old1 = 0.0;
-    double f_new1;
-    double dt1;
-    int flag = 0;
-};
 
 // ======== Class: allows to compute the integral in-between a single simulation time-step through the cumulative trapezoidal method ==============================================================================================================================================
 class CumTrapezIntegration {
@@ -107,40 +45,6 @@ std::vector<double> GetEulerAngPos(std::shared_ptr<chrono::ChBody> body, double&
     return Results;
 }
 
-// ======== Class: Replica of the Simulink block: 1-D Lookup Table ==============================================================================================================================================
-class LookupTable1D {
-public:
-    LookupTable1D(const std::vector<double>& breakpoints, const std::vector<double>& table_data)
-        : breakpoints(breakpoints), table_data(table_data) {}
-
-    double interpolate(double x) {
-        // Find the index of the left breakpoint
-        size_t left_index = 0;
-        for (size_t i = 1; i < breakpoints.size(); ++i) {
-            if (breakpoints[i] <= x) {
-                left_index = i;
-            }
-            else {
-                break;
-            }
-        }
-        // If x is beyond the last breakpoint, use the last data point
-        if (left_index == breakpoints.size() - 1) {
-            return table_data.back();
-        }
-        // Linear interpolation
-        double x_left = breakpoints[left_index];
-        double x_right = breakpoints[left_index + 1];
-        double y_left = table_data[left_index];
-        double y_right = table_data[left_index + 1];
-        double y_interp = y_left + (y_right - y_left) * (x - x_left) / (x_right - x_left);
-        return y_interp;
-    }
-private:
-    std::vector<double> breakpoints;
-    std::vector<double> table_data;
-};
-
 // ======== Method: converts all the characters in the input string to lowercase and returns the resulting string ==============================================================================================================================================
 std::string toLowerCase(const std::string& str) {
     std::string lower_str = str;
@@ -169,20 +73,220 @@ void prompt_map_string_vector_double(std::map<std::string, std::vector<double>>&
 }
 
 
+std::shared_ptr<ChBody> Frame_body;
+ChQuaternion<> jointOrientation;
+
+enum class JointType {
+    FIXED,
+    REVOLUTE,
+    PRISMATIC
+};
+ChSystemNSC GravetySetup(){
+    std::cout << "Copyright (c) 2017 projectchrono.org\nChrono version: " << CHRONO_VERSION << "\n\n";
+    ChSystemNSC sys; // Create a Chrono physical system
+    sys.SetCollisionSystemType(ChCollisionSystem::Type::BULLET);
+    
+    ChVector3d gravity_acc = sys.GetGravitationalAcceleration(); 
+    std::cout << "The gravity acceleration  vector is: " << gravity_acc << "\n\n";
+    double gravity = 9.81e3; //[mm/s^2]
+    sys.SetGravitationalAcceleration(ChVector3d(gravity, 0, 0));
+    ChVector3d gravity_acc_new = sys.GetGravitationalAcceleration(); 
+    std::cout << "The new gravity acceleration  vector is: " << gravity_acc_new << "\n\n";
+    return sys;
+}           
+void AddVisualizationBall(ChSystemNSC& sys, const ChVector3d& position, const ChColor& color = ChColor(1,0,0), int rad = 8){
+    // set a ball on the center of mass_calc of the frame for visualization purposes        
+    auto mat = chrono_types::make_shared<ChContactMaterialNSC>();
+    mat->SetFriction(0.4f);
+    mat->SetCompliance(0.0);
+    mat->SetComplianceT(0.0);
+    mat->SetDampingF(0.2f);
+    auto mrigidBall = chrono_types::make_shared<ChBodyEasySphere>(rad, 10, true, true, mat);
+    mrigidBall->SetPos(position);
+    mrigidBall->SetPosDt(ChVector3d(0, 0, 0));  // set initial speed
+    auto sphere_shape = chrono_types::make_shared<ChVisualShapeSphere>(rad);
+    sphere_shape->SetColor(color);
+    mrigidBall->AddVisualShape(sphere_shape);
+    mrigidBall->SetFixed(true);
+    sys.Add(mrigidBall);
+}
+void AddAxis(ChSystemNSC& sys, const ChVector3d& position, float x = 2, float y = 2, float z = 2, const ChColor& color = ChColor(1.0f, 0.0f, 0.0f)){
+    auto mat = chrono_types::make_shared<ChContactMaterialNSC>();
+    auto x_axis = chrono_types::make_shared<ChBodyEasyBox>(
+        x, y, z, 1000, true, false, mat);
+    x_axis->SetPos(ChVector3d(position[0]-x/2, position[1]-y/2, position[2]-z/2));  // Position along X-axis
+    x_axis->SetFixed(true);
+    x_axis->GetVisualShape(0)->SetColor(color); // Red color
+    sys.Add(x_axis);
+}
+void AddCylAxis(ChSystemNSC& sys, const ChVector3d& position, ChQuaternion<> jointOrientation, float rad = 0.5, float len = 100, const ChColor& color = ChColor(0.0f, 0.0f, 1.0f)){
+    auto axisShape = chrono_types::make_shared<ChVisualShapeCylinder>(rad, len); // Radius = 2, Length = 50
+    axisShape->SetColor(color);
+    auto axisBody = chrono_types::make_shared<ChBody>();
+    axisBody->SetPos(position);
+    axisBody->SetFixed(true); // The axis is just for visualization
+    axisBody->AddVisualShape(axisShape, ChFrame<>(ChVector3d(0, 0, 0), jointOrientation));
+    sys.Add(axisBody);
+}
+void createJoint(ChSystemNSC& sys, std::shared_ptr<ChBody> bodyA, std::shared_ptr<ChBody> bodyB, JointType jointType, const ChVector3d& position, bool showAxis = false) {
+    ChFrame<> jointFrame(position, jointOrientation);
+
+    std::shared_ptr<ChLinkLock> Joint;
+    switch (jointType) {
+        case JointType::FIXED:      {Joint = chrono_types::make_shared<ChLinkLockLock>();      break;}
+        case JointType::REVOLUTE:   {Joint = chrono_types::make_shared<ChLinkLockRevolute>();  break;}
+        case JointType::PRISMATIC:  {Joint = chrono_types::make_shared<ChLinkLockPrismatic>(); break;}
+        default:    throw std::invalid_argument("Invalid joint type.");
+    }
+
+    Joint->Initialize(bodyA, bodyB, jointFrame);  
+    sys.AddLink(Joint);
+    
+    if(showAxis)AddCylAxis(sys, bodyA->GetPos(), jointOrientation);
+}
+ChFrame<> GetFramee(std::shared_ptr<ChBody> body, const ChVector3d& orinn = ChVector3d(1, 0, 0)){
+    ChVector3d jointPos(body->GetPos());
+    ChQuaternion<> jointOr;
+    jointOr.SetFromAngleAxis(90.0 * (CH_PI / 180.0), orinn);    
+    ChFrame<> jointFrame(jointPos, jointOr);
+    return jointFrame;
+}
+std::shared_ptr<ChBodyEasyCylinder> makeGears(ChSystemNSC& sys, float rad, const ChVector3d& position){
+    auto mat = chrono_types::make_shared<ChContactMaterialNSC>();
+    auto vis_mat = chrono_types::make_shared<ChVisualMaterial>();
+    vis_mat->SetKdTexture(GetChronoDataFile("textures/pinkwhite.png"));
+    auto gear = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, rad, 0.4, 1000, true, false, mat);
+    gear->SetPos(position);
+    gear->SetRot(QuatFromAngleX(CH_PI_2));
+    gear->GetVisualShape(0)->SetMaterial(0, vis_mat);
+    sys.Add(gear);
+
+    auto link_revolute = chrono_types::make_shared<ChLinkLockRevolute>();
+    link_revolute->Initialize(gear, Frame_body, ChFrame<>(position, jointOrientation));
+    sys.AddLink(link_revolute);
+
+    return gear;
+}
+void gearMate(ChSystemNSC& sys, std::shared_ptr<ChBody> bodyA, std::shared_ptr<ChBody> bodyB, double radA, double radB){
+    auto link_gearAB = chrono_types::make_shared<ChLinkLockGear>();
+    link_gearAB->Initialize(bodyA, bodyB, ChFrame<>());
+    link_gearAB->SetFrameShaft1(ChFrame<>(VNULL, chrono::QuatFromAngleZ(CH_PI_2)));  // Shaft 1 at gear A
+    link_gearAB->SetFrameShaft2(ChFrame<>(VNULL, chrono::QuatFromAngleZ(CH_PI_2)));  // Shaft 2 at gear B
+    link_gearAB->SetTransmissionRatio(radA / radB);
+    // link_gearAB->SetEnforcePhase(true);
+    sys.AddLink(link_gearAB);
+}
+
+class RigidBody {
+    public:
+        RigidBody(ChSystemNSC& sys, const std::string& file_name, bool is_fixed = false, bool transparent = false)
+            : system(sys), obj_file(file_name), is_fixed(is_fixed) {SetupRigidBody(transparent);}
+    
+        std::shared_ptr<ChBody> GetBody() const {return body;}
+        ChVector3d GetCOG() const {return cog;}
+        ChVector3d getPos() const {return body->GetPos();}
+        std::tuple<std::shared_ptr<ChBody>, ChVector3d> GetBodyAndCOG() const {return std::make_tuple(body, cog);}
+        void HideBody() {mesh->SetVisible(false);}
+        void ShowCG() {AddVisualizationBall(system, body->GetPos());}
+        void setPos(ChVector3d poss){body->SetPos(poss);}
+        void setColor(ChColor colll){mesh->SetColor(colll);}
+        void RotateBody(double angle, ChVector3d axis) {
+            ChQuaternion<> rot_q;
+            rot_q.SetFromAngleAxis(angle, axis);
+            body->SetRot(rot_q * body->GetRot()); // Apply rotation
+        }
+        
+        void setData(const std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3d, double, std::string>& objData) { 
+            // Get the Values
+            position = std::get<1>(objData);
+            rotation = std::get<2>(objData);  
+            inertia_SW = std::get<3>(objData);  
+            mass_SW = std::get<4>(objData); 
+            file_name = std::get<5>(objData); 
+            // if(prnt)std::cout << mass_SW << "\n\n\n";
+
+            // Set the Values
+            body->SetPos(position-posOffset);
+            body->SetRot(rotation);
+            body->SetMass(mass_SW);
+            body->SetInertiaXX(inertia_SW);
+            if (prnt) {
+                std::cout << std::fixed << std::setprecision(3); // Set precision for floating-point numbers
+                std::cout << std::setw(15) << file_name << "  "
+                          << std::setw(5) << "m= " << std::setw(8) << mass_calc << "  "
+                          << std::setw(5) << "v= " << std::setw(12) << volume << "  "
+                          << std::setw(20) << geometric_inertia_calc(0,0) 
+                          << std::setw(20) << geometric_inertia_calc(1,1) 
+                          << std::setw(20) << geometric_inertia_calc(2,2) 
+                          << std::setw(20) << inertia_SW[0] 
+                          << std::setw(20) << inertia_SW[1] 
+                          << std::setw(20) << inertia_SW[2] 
+                          << std::endl;
+            }
+        }
+    private:
+        bool prnt=1;
+        ChSystemNSC& system;
+        std::string obj_file;
+        std::string file_name;
+        double density;
+        bool is_fixed;
+        std::shared_ptr<ChBody> body;
+        std::shared_ptr<ChVisualShapeTriangleMesh> mesh;
+        std::shared_ptr<ChVisualShapeTriangleMesh> coll_mesh;
+        std::shared_ptr<ChCollisionModel> coll_model;
+        ChVector3d cog;
+        ChVector3d position;
+        ChQuaternion<> rotation;
+        double mass_calc;
+        double volume;
+        ChMatrix33<> inertia_calc;
+        ChMatrix33<> geometric_inertia_calc;
+
+        double mass_SW;
+        ChVector3d inertia_SW;
+
+    
+        void SetupRigidBody(bool trans) {
+            // Load visualization mesh
+            obj_file = std::string("my_project/CAD/View/") + obj_file + std::string(".obj");
+            auto trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(obj_file));
+            std::string coll_file = obj_file;
+            auto coll_trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(coll_file));
+            // std::cout<<"\t\t\t2"<<std::endl;
+    
+            trimesh->ComputeMassProperties(true, volume, cog, geometric_inertia_calc);
+            // std::cout<<"\t\t\t3"<<std::endl;
+    
+            // Calculate mass_calc and inertia_calc
+            density = 8900.00 / (1e9);
+            mass_calc = density * volume;
+            inertia_calc = density * geometric_inertia_calc;
+    
+            // Create rigid body
+            body = chrono_types::make_shared<ChBody>();
+            body->SetFixed(is_fixed);
+            body->SetMass(mass_calc);
+            // body->SetPos(cog);
+            body->SetInertiaXX(ChVector3d(inertia_calc(0, 0), inertia_calc(1, 1), inertia_calc(2, 2)));
+            
+            system.Add(body);
+    
+            // Visualization
+            mesh = chrono_types::make_shared<ChVisualShapeTriangleMesh>();
+            mesh->SetMesh(trimesh);
+            mesh->SetMutable(false);
+            if(trans)mesh->SetOpacity(0.5f);
+            mesh->SetBackfaceCull(true);
+            body->AddVisualShape(mesh, ChFrame<>(-cog, ChMatrix33<>(1)));
+        }
+    };
+
 // ===============================================================================================================================================================================
 // ======== MAIN LOOP ==============================================================================================================================================
 // ===============================================================================================================================================================================
 
 int main(int argc, char* argv[]) {
-    
-
-    // ===============================================================================================================================================================================
-    // ======== MECHANICAL DOMAIN ==============================================================================================================================================
-    // ===============================================================================================================================================================================
-
-    // ===============================================================================================================================================================================
-    // ======== CREATE A NSC CHRONO SYSTEM ==============================================================================================================================================
-    // ===============================================================================================================================================================================
     std::cout << "Copyright (c) 2017 projectchrono.org\nChrono version: " << CHRONO_VERSION << "\n\n";
     ChSystemNSC sys; // Create a Chrono physical system
     sys.SetCollisionSystemType(ChCollisionSystem::Type::BULLET);
@@ -191,9 +295,6 @@ int main(int argc, char* argv[]) {
     // Mechanical Unit system: [kg]-[mm]-[s] -> The use of [mm] is require cause extrimelly small collisiion parameters crash the simulation
     // Electric Unit system: [kg]-[m]-[s]
 
-    // ===============================================================================================================================================================================
-    // ======== SET THE GRAVITY ACCELERATION ==============================================================================================================================================
-    // ===============================================================================================================================================================================
     ChVector3d gravity_acc = sys.GetGravitationalAcceleration(); 
     std::cout << "The gravity acceleration  vector is: " << gravity_acc << "\n\n";
     double gravity = 9.81e3; //[mm/s^2]
@@ -201,85 +302,103 @@ int main(int argc, char* argv[]) {
     ChVector3d gravity_acc_new = sys.GetGravitationalAcceleration(); 
     std::cout << "The new gravity acceleration  vector is: " << gravity_acc_new << "\n\n";
   
+    RigidBody RotorWinding(sys, "RotorWinding_OBJ");
+    auto RotorWinding_body = RotorWinding.GetBody();
+
+    RigidBody Stator(sys, "Stator_OBJ", true, true);
+    auto Stator_body = Stator.GetBody();
+
+    ChQuaternion<> RotorWinding_Stator_Torsional_Spring_Orientation;
+    RotorWinding_Stator_Torsional_Spring_Orientation.SetFromAngleAxis(90.0 * M_PI / 180.0, ChVector3d(0, 1, 0)); // !!! IMPORTANT !!! the Torsional Spring is oriented always arround Z-axis -> Set correctly the orientation 
+    jointOrientation.SetFromAngleAxis(90.0 * (CH_PI / 180.0), ChVector3d(0, 0, 1));
+    ChVector3d Torque_direction_RotorWinding_Stator(1, 0, 0); // IMPORTANT!! the direction vertex need to be normalized 
+    
+
+    // RotorWinding.RotateBody(CH_PI_2, ChVector3d(0, 1, 0));
+    // Stator.RotateBody(CH_PI_2, ChVector3d(0, 1, 0));
+    // RotorWinding_Stator_Torsional_Spring_Orientation.SetFromAngleAxis(90.0 * M_PI / 180.0, ChVector3d(0, 1, 0)); // !!! IMPORTANT !!! the Torsional Spring is oriented always arround Z-axis -> Set correctly the orientation 
+    // jointOrientation.SetFromAngleAxis(90.0 * (CH_PI / 180.0), ChVector3d(0, 0, 1));
+    // ChVector3d Torque_direction_RotorWinding_Stator(1, 0, 0); 
+
     // ===========================================================================================================================================================================================
     // ======== RIGID BODY DEFINITION: WaveFront Shape -> RotorWinding ====================================================================================================================================
     // ===========================================================================================================================================================================================
     // ======== File name ========================================================================================================================================================================
-    std::string RotorWinding_file_name = "my_project/CAD/View/RotorWinding_OBJ.obj";
-    std::string RotorWinding_Collision_file_name = "my_project/CAD/Collision/RotorWinding_Collision_OBJ.obj";
-    // ======== MESHES ===========================================================================================================================================================================
-    // ======== Visualization Mesh ===============================================================================================================================================================
-    auto RotorWinding_trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(RotorWinding_file_name));
-    auto RotorWinding_mesh = chrono_types::make_shared<ChVisualShapeTriangleMesh>();
-    RotorWinding_mesh->SetMesh(RotorWinding_trimesh);
-    RotorWinding_mesh->SetVisible(true);
-    // ======== Compute mass inertia from mesh ===================================================================================================================================================
-    double RotorWinding_volume; // [mm^3]  
-    ChVector3d RotorWinding_cog; // [mm]   
-    ChMatrix33<> RotorWinding_geometric_inertia; // [mm^5] it is the geometric inertia tensor (see when you call: RotorWinding_mesh->ComputeMassProperties) 
-    RotorWinding_trimesh->ComputeMassProperties(true, RotorWinding_volume, RotorWinding_cog, RotorWinding_geometric_inertia); // It returns: RotorWinding_volume:[mm^3], RotorWinding_cog:[mm], RotorWinding_inertia:[mm^5] that is the geometric inertia tensor 
-    double RotorWinding_density = 8900.00 / (1e9); // [kg/mm^3]
-    double RotorWinding_mass = RotorWinding_density * RotorWinding_volume; // [kg]
-    ChMatrix33<> RotorWinding_inertia = RotorWinding_density * RotorWinding_geometric_inertia; // [kg*mm^2]
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << "\n";
-    std::cout << "!!!!!!! RotorWinding -> Inertia properies: !!!!!!!" << "\n"; // Display the Inertia properties of the body
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << "\n";
-    std::cout << "The RotorWinding mass is: " << RotorWinding_mass << " [kg]" << "\n\n";
-    std::cout << "The RotorWinding cog is: " << RotorWinding_cog << " [mm]" << "\n\n";
-    std::cout << "The RotorWinding inertia tensor is:\n" << RotorWinding_inertia << " [kg*mm^2]" << "\n\n";
-    // ======== Define the rigid body ============================================================================================================================================================
-    auto RotorWinding_body = chrono_types::make_shared<ChBody>();
-    sys.Add(RotorWinding_body);
-    RotorWinding_body->SetFixed(false);
-    RotorWinding_body->SetMass(RotorWinding_mass);
-    RotorWinding_body->SetInertiaXX(ChVector3d(RotorWinding_inertia(0, 0), RotorWinding_inertia(1, 1), RotorWinding_inertia(2, 2)));
-    RotorWinding_body->SetPos(RotorWinding_cog);
-    // ======== Visulaization ====================================================================================================================================================================
-    RotorWinding_mesh->SetMutable(false);
-    RotorWinding_mesh->SetColor(ChColor(0.0f, 0.616f, 1.0f));
-    RotorWinding_mesh->SetOpacity(0.5f);
-    RotorWinding_mesh->SetBackfaceCull(true);
-    RotorWinding_body->AddVisualShape(RotorWinding_mesh, ChFrame<>(-RotorWinding_cog, ChMatrix33<>(1)));
+    // std::string RotorWinding_file_name = "my_project/CAD/View/RotorWinding_OBJ.obj";
+    // std::string RotorWinding_Collision_file_name = "my_project/CAD/Collision/RotorWinding_Collision_OBJ.obj";
+    // // ======== MESHES ===========================================================================================================================================================================
+    // // ======== Visualization Mesh ===============================================================================================================================================================
+    // auto RotorWinding_trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(RotorWinding_file_name));
+    // auto RotorWinding_mesh = chrono_types::make_shared<ChVisualShapeTriangleMesh>();
+    // RotorWinding_mesh->SetMesh(RotorWinding_trimesh);
+    // RotorWinding_mesh->SetVisible(true);
+    // // ======== Compute mass inertia from mesh ===================================================================================================================================================
+    // double RotorWinding_volume; // [mm^3]  
+    // ChVector3d RotorWinding_cog; // [mm]   
+    // ChMatrix33<> RotorWinding_geometric_inertia; // [mm^5] it is the geometric inertia tensor (see when you call: RotorWinding_mesh->ComputeMassProperties) 
+    // RotorWinding_trimesh->ComputeMassProperties(true, RotorWinding_volume, RotorWinding_cog, RotorWinding_geometric_inertia); // It returns: RotorWinding_volume:[mm^3], RotorWinding_cog:[mm], RotorWinding_inertia:[mm^5] that is the geometric inertia tensor 
+    // double RotorWinding_density = 8900.00 / (1e9); // [kg/mm^3]
+    // double RotorWinding_mass = RotorWinding_density * RotorWinding_volume; // [kg]
+    // ChMatrix33<> RotorWinding_inertia = RotorWinding_density * RotorWinding_geometric_inertia; // [kg*mm^2]
+    // std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << "\n";
+    // std::cout << "!!!!!!! RotorWinding -> Inertia properies: !!!!!!!" << "\n"; // Display the Inertia properties of the body
+    // std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << "\n";
+    // std::cout << "The RotorWinding mass is: " << RotorWinding_mass << " [kg]" << "\n\n";
+    // std::cout << "The RotorWinding cog is: " << RotorWinding_cog << " [mm]" << "\n\n";
+    // std::cout << "The RotorWinding inertia tensor is:\n" << RotorWinding_inertia << " [kg*mm^2]" << "\n\n";
+    // // ======== Define the rigid body ============================================================================================================================================================
+    // auto RotorWinding_body = chrono_types::make_shared<ChBody>();
+    // sys.Add(RotorWinding_body);
+    // RotorWinding_body->SetFixed(false);
+    // RotorWinding_body->SetMass(RotorWinding_mass);
+    // RotorWinding_body->SetInertiaXX(ChVector3d(RotorWinding_inertia(0, 0), RotorWinding_inertia(1, 1), RotorWinding_inertia(2, 2)));
+    // RotorWinding_body->SetPos(RotorWinding_cog);
+    // // ======== Visulaization ====================================================================================================================================================================
+    // RotorWinding_mesh->SetMutable(false);
+    // RotorWinding_mesh->SetColor(ChColor(0.0f, 0.616f, 1.0f));
+    // RotorWinding_mesh->SetOpacity(0.5f);
+    // RotorWinding_mesh->SetBackfaceCull(true);
+    // RotorWinding_body->AddVisualShape(RotorWinding_mesh, ChFrame<>(-RotorWinding_cog, ChMatrix33<>(1)));
 
     // ===========================================================================================================================================================================================
     // ======== RIGID BODY DEFINITION: WaveFront Shape -> Stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
     // ======== File name ========================================================================================================================================================================
-    std::string Stator_file_name = "my_project/CAD/View/Stator_OBJ.obj";
-    std::string Stator_Collision_file_name = "my_project/CAD/Collision/Stator_Collision_OBJ.obj";
-    // ======== MESHES ===========================================================================================================================================================================
-    // ======== Visualization Mesh ===============================================================================================================================================================
-    auto Stator_trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(Stator_file_name));
-    auto Stator_mesh = chrono_types::make_shared<ChVisualShapeTriangleMesh>();
-    Stator_mesh->SetMesh(Stator_trimesh);
-    Stator_mesh->SetVisible(true);
-    // ======== Compute mass inertia from mesh ===================================================================================================================================================
-    double Stator_volume; // [mm^3]  
-    ChVector3d Stator_cog; // [mm]   
-    ChMatrix33<> Stator_geometric_inertia; // [mm^5] it is the geometric inertia tensor (see when you call: Stator_mesh->ComputeMassProperties) 
-    Stator_trimesh->ComputeMassProperties(true, Stator_volume, Stator_cog, Stator_geometric_inertia); // It returns: Stator_volume:[mm^3], Stator_cog:[mm], Stator_inertia:[mm^5] that is the geometric inertia tensor 
-    double Stator_density = 7850.00 / (1e9); // [kg/mm^3]
-    double Stator_mass = Stator_density * Stator_volume; // [kg]
-    ChMatrix33<> Stator_inertia = Stator_density * Stator_geometric_inertia; // [kg*mm^2]
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << "\n";
-    std::cout << "!!!!!!! Stator -> Inertia properies: !!!!!!!" << "\n"; // Display the Inertia properties of the body
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << "\n";
-    std::cout << "The Stator mass is: " << Stator_mass << " [kg]" << "\n\n";
-    std::cout << "The Stator cog is: " << Stator_cog << " [mm]" << "\n\n";
-    std::cout << "The Stator inertia tensor is:\n" << Stator_inertia << " [kg*mm^2]" << "\n\n";
-    // ======== Define the rigid body ============================================================================================================================================================
-    auto Stator_body = chrono_types::make_shared<ChBody>();
-    sys.Add(Stator_body);
-    Stator_body->SetFixed(true);
-    Stator_body->SetMass(Stator_mass);
-    Stator_body->SetInertiaXX(ChVector3d(Stator_inertia(0, 0), Stator_inertia(1, 1), Stator_inertia(2, 2)));
-    Stator_body->SetPos(Stator_cog);
-    // ======== Visulaization ====================================================================================================================================================================
-    Stator_mesh->SetMutable(false);
-    Stator_mesh->SetColor(ChColor(1.0f, 0.0f, 0.0f));
-    Stator_mesh->SetOpacity(0.5f);
-    Stator_mesh->SetBackfaceCull(true);
-    Stator_body->AddVisualShape(Stator_mesh, ChFrame<>(-Stator_cog, ChMatrix33<>(1)));
+    // std::string Stator_file_name = "my_project/CAD/View/Stator_OBJ.obj";
+    // std::string Stator_Collision_file_name = "my_project/CAD/Collision/Stator_Collision_OBJ.obj";
+    // // ======== MESHES ===========================================================================================================================================================================
+    // // ======== Visualization Mesh ===============================================================================================================================================================
+    // auto Stator_trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(Stator_file_name));
+    // auto Stator_mesh = chrono_types::make_shared<ChVisualShapeTriangleMesh>();
+    // Stator_mesh->SetMesh(Stator_trimesh);
+    // Stator_mesh->SetVisible(true);
+    // // ======== Compute mass inertia from mesh ===================================================================================================================================================
+    // double Stator_volume; // [mm^3]  
+    // ChVector3d Stator_cog; // [mm]   
+    // ChMatrix33<> Stator_geometric_inertia; // [mm^5] it is the geometric inertia tensor (see when you call: Stator_mesh->ComputeMassProperties) 
+    // Stator_trimesh->ComputeMassProperties(true, Stator_volume, Stator_cog, Stator_geometric_inertia); // It returns: Stator_volume:[mm^3], Stator_cog:[mm], Stator_inertia:[mm^5] that is the geometric inertia tensor 
+    // double Stator_density = 7850.00 / (1e9); // [kg/mm^3]
+    // double Stator_mass = Stator_density * Stator_volume; // [kg]
+    // ChMatrix33<> Stator_inertia = Stator_density * Stator_geometric_inertia; // [kg*mm^2]
+    // std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << "\n";
+    // std::cout << "!!!!!!! Stator -> Inertia properies: !!!!!!!" << "\n"; // Display the Inertia properties of the body
+    // std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << "\n";
+    // std::cout << "The Stator mass is: " << Stator_mass << " [kg]" << "\n\n";
+    // std::cout << "The Stator cog is: " << Stator_cog << " [mm]" << "\n\n";
+    // std::cout << "The Stator inertia tensor is:\n" << Stator_inertia << " [kg*mm^2]" << "\n\n";
+    // // ======== Define the rigid body ============================================================================================================================================================
+    // auto Stator_body = chrono_types::make_shared<ChBody>();
+    // sys.Add(Stator_body);
+    // Stator_body->SetFixed(true);
+    // Stator_body->SetMass(Stator_mass);
+    // Stator_body->SetInertiaXX(ChVector3d(Stator_inertia(0, 0), Stator_inertia(1, 1), Stator_inertia(2, 2)));
+    // Stator_body->SetPos(Stator_cog);
+    // // ======== Visulaization ====================================================================================================================================================================
+    // Stator_mesh->SetMutable(false);
+    // Stator_mesh->SetColor(ChColor(1.0f, 0.0f, 0.0f));
+    // Stator_mesh->SetOpacity(0.5f);
+    // Stator_mesh->SetBackfaceCull(true);
+    // Stator_body->AddVisualShape(Stator_mesh, ChFrame<>(-Stator_cog, ChMatrix33<>(1)));
     // Stator_body->AddVisualShape(Stator_coll_mesh, ChFrame<>(-Stator_cog, ChMatrix33<>(1)));
 
     // ===========================================================================================================================================================================================
@@ -304,7 +423,6 @@ int main(int argc, char* argv[]) {
     // ======== F / T DEFINITION -> UNIVERSAL FORCE: RotorWinding - Stator ====================================================================================================================================
     // ===========================================================================================================================================================================================
     // ======== TORQUE TEMEPLATE ===========================================================================================================================================================================
-    ChVector3d Torque_direction_RotorWinding_Stator(1, 0, 0); // IMPORTANT!! the direction vertex need to be normalized  
     double Torque_magnitude_RotorWinding_Stator = -0.0 * 1e3 * 1e3; //[Nm] converted to ([kg]-[mm]-[s]) 
     ChVector3d RotorWinding_Stator_Torque = Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
  
@@ -322,8 +440,6 @@ int main(int argc, char* argv[]) {
     auto RotorWinding_Stator_Torsional_Spring = chrono_types::make_shared<ChLinkRSDA>();
     ChVector3d RotorWinding_Stator_Torsional_Spring_Position(Stator_body->GetPos());  //[mm] set the position in the 3D space of the link respect to the absolute frame
     //RotorWinding_Stator_Torsional_Spring_Position[2] += 6.0;  //[mm] Rise the position of the spring along y-axis in order to see it better in the animation
-    ChQuaternion<> RotorWinding_Stator_Torsional_Spring_Orientation;
-    RotorWinding_Stator_Torsional_Spring_Orientation.SetFromAngleAxis(90.0 * M_PI / 180.0, ChVector3d(0, 1, 0)); // !!! IMPORTANT !!! the Torsional Spring is oriented always arround Z-axis -> Set correctly the orientation 
     ChFrame<> RotorWinding_Stator_Torsional_Spring_Frame(RotorWinding_Stator_Torsional_Spring_Position, RotorWinding_Stator_Torsional_Spring_Orientation);
     RotorWinding_Stator_Torsional_Spring->Initialize(RotorWinding_body,                                   // Body 1  
         Stator_body,                                  // Body 2 
@@ -391,10 +507,9 @@ int main(int argc, char* argv[]) {
     double t_sim_mechanics = 0.0; //[s] 
     double t_sim_electronics = 0.0; //[s]
     double t_sampling_electronic_counter = 0; //[s] This variable is needed to count the event at which the Electronic domain need to be called respect to the Global Time-line
-    int brake_flag = 1; // Set a brake flag in the case you want to stop the simulation before: t_simulation_STOP
     double Imotor = 0.0;
     double T_PWM = 0.004; //[s] PWM Period
-    double Duty_PWM = 100.0 / 100; //[s] PWM Duty
+    double Duty_PWM = 0.0 / 100; //[s] PWM Duty
     double t_PWM_counter = 0.0; //[s] PWM Period
     // ===========================================================================================================================================================================================
     // ======== INITIALIZE THE ELECTRONIC CIRCUIT ====================================================================================================================================================================
@@ -426,12 +541,8 @@ int main(int argc, char* argv[]) {
     OutputMap["T_magnetic"] = {};
     OutputMap["T_motor"] = {};
 
-    while (t_sim_mechanics < t_simulation_STOP && brake_flag == 1) {
+    while (t_sim_mechanics < t_simulation_STOP && vis->Run()) {
         // ======== RUN -> the Irrlicht visualizer ====================================================================================================================================================================
-        vis->Run();
-        //tools::drawGrid(vis.get(), 2, 2, 30, 30, ChCoordsys<>(ChVector3d(0, 0.01, 0), QuatFromAngleX(CH_PI_2)),ChColor(0.3f, 0.3f, 0.3f), true);
-        if (vis->Run()) { brake_flag = 1; } // Check if the User wanted to stop de simulation before: t_simulation_STOP
-        else { brake_flag = 0; }
         vis->BeginScene();
         vis->Render();
         vis->EndScene();
@@ -454,26 +565,17 @@ int main(int argc, char* argv[]) {
             if(1){
                 for (const auto& [key, values] : res1) {
                     std::cout << key << "= ";
-                    std::cout << res1[key].back()<<"   \t";
-                }
-                std::cout << "\n";
-            }
+                    std::cout << res1[key].back()<<"   \t";}
+                std::cout << "\n";}
             // ======== UPDATE -> the Electronic parameters ====================================================================================================================================================================
             if (t_sim_mechanics >= 0.0){
-                if (t_PWM_counter <= T_PWM * Duty_PWM)
-                {
+                if (t_PWM_counter <= T_PWM * Duty_PWM){
                     PWLIn["VpwmVAR"] = 12.0;
-                    t_PWM_counter += t_step_mechanic;
-                }
-                else
-                {
+                    t_PWM_counter += t_step_mechanic;}
+                else{
                     PWLIn["VpwmVAR"] = 0.0;
-                    t_PWM_counter += t_step_mechanic;
-                }
-                if (t_PWM_counter > T_PWM)
-                {
-                    t_PWM_counter = 0.0;
-                }
+                    t_PWM_counter += t_step_mechanic;}
+                if (t_PWM_counter > T_PWM){t_PWM_counter = 0.0;}
 
             }
             PWLIn["VmotorVAR"] = -Vbackemf;

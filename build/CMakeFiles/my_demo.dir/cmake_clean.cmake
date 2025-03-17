@@ -1,8 +1,8 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/my_demo.dir/back7_mech.cpp.o"
-  "CMakeFiles/my_demo.dir/back7_mech.cpp.o.d"
-  "CMakeFiles/my_demo.dir/objInfo2.cpp.o"
-  "CMakeFiles/my_demo.dir/objInfo2.cpp.o.d"
+  "CMakeFiles/my_demo.dir/back8.cpp.o"
+  "CMakeFiles/my_demo.dir/back8.cpp.o.d"
+  "CMakeFiles/my_demo.dir/objInfo1.cpp.o"
+  "CMakeFiles/my_demo.dir/objInfo1.cpp.o.d"
   "bin/my_demo"
   "bin/my_demo.pdb"
 )

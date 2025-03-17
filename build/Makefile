@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/jamiul/Downloads/dynoMotor
+CMAKE_SOURCE_DIR = /home/saad/Downloads/dynoMotor
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/jamiul/Downloads/dynoMotor/build
+CMAKE_BINARY_DIR = /home/saad/Downloads/dynoMotor/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/jamiul/Downloads/dynoMotor/build/CMakeFiles /home/jamiul/Downloads/dynoMotor/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/saad/Downloads/dynoMotor/build/CMakeFiles /home/saad/Downloads/dynoMotor/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/jamiul/Downloads/dynoMotor/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/saad/Downloads/dynoMotor/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -129,53 +129,53 @@ my_demo/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/build
 .PHONY : my_demo/fast
 
-back7_mech.o: back7_mech.cpp.o
-.PHONY : back7_mech.o
+back8.o: back8.cpp.o
+.PHONY : back8.o
 
 # target to build an object file
-back7_mech.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back7_mech.cpp.o
-.PHONY : back7_mech.cpp.o
+back8.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back8.cpp.o
+.PHONY : back8.cpp.o
 
-back7_mech.i: back7_mech.cpp.i
-.PHONY : back7_mech.i
+back8.i: back8.cpp.i
+.PHONY : back8.i
 
 # target to preprocess a source file
-back7_mech.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back7_mech.cpp.i
-.PHONY : back7_mech.cpp.i
+back8.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back8.cpp.i
+.PHONY : back8.cpp.i
 
-back7_mech.s: back7_mech.cpp.s
-.PHONY : back7_mech.s
+back8.s: back8.cpp.s
+.PHONY : back8.s
 
 # target to generate assembly for a file
-back7_mech.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back7_mech.cpp.s
-.PHONY : back7_mech.cpp.s
+back8.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back8.cpp.s
+.PHONY : back8.cpp.s
 
-objInfo2.o: objInfo2.cpp.o
-.PHONY : objInfo2.o
+objInfo1.o: objInfo1.cpp.o
+.PHONY : objInfo1.o
 
 # target to build an object file
-objInfo2.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo2.cpp.o
-.PHONY : objInfo2.cpp.o
+objInfo1.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.o
+.PHONY : objInfo1.cpp.o
 
-objInfo2.i: objInfo2.cpp.i
-.PHONY : objInfo2.i
+objInfo1.i: objInfo1.cpp.i
+.PHONY : objInfo1.i
 
 # target to preprocess a source file
-objInfo2.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo2.cpp.i
-.PHONY : objInfo2.cpp.i
+objInfo1.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.i
+.PHONY : objInfo1.cpp.i
 
-objInfo2.s: objInfo2.cpp.s
-.PHONY : objInfo2.s
+objInfo1.s: objInfo1.cpp.s
+.PHONY : objInfo1.s
 
 # target to generate assembly for a file
-objInfo2.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo2.cpp.s
-.PHONY : objInfo2.cpp.s
+objInfo1.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.s
+.PHONY : objInfo1.cpp.s
 
 # Help Target
 help:
@@ -186,12 +186,12 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... my_demo"
-	@echo "... back7_mech.o"
-	@echo "... back7_mech.i"
-	@echo "... back7_mech.s"
-	@echo "... objInfo2.o"
-	@echo "... objInfo2.i"
-	@echo "... objInfo2.s"
+	@echo "... back8.o"
+	@echo "... back8.i"
+	@echo "... back8.s"
+	@echo "... objInfo1.o"
+	@echo "... objInfo1.i"
+	@echo "... objInfo1.s"
 .PHONY : help
 
 
