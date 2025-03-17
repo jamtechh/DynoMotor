@@ -69,5 +69,4 @@ extern std::vector<std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3
 
 extern ChVector3d posOffset;
 
-
 #endif // OBJINFO1_H

@@ -8,8 +8,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/jamiul/Downloads/dynoMotor/mainProj.cpp" "CMakeFiles/my_demo.dir/mainProj.cpp.o" "gcc" "CMakeFiles/my_demo.dir/mainProj.cpp.o.d"
-  "/home/jamiul/Downloads/dynoMotor/objInfo1.cpp" "CMakeFiles/my_demo.dir/objInfo1.cpp.o" "gcc" "CMakeFiles/my_demo.dir/objInfo1.cpp.o.d"
+  "/home/jamiul/Downloads/dynoMotor/back7_mech.cpp" "CMakeFiles/my_demo.dir/back7_mech.cpp.o" "gcc" "CMakeFiles/my_demo.dir/back7_mech.cpp.o.d"
+  "/home/jamiul/Downloads/dynoMotor/objInfo2.cpp" "CMakeFiles/my_demo.dir/objInfo2.cpp.o" "gcc" "CMakeFiles/my_demo.dir/objInfo2.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

@@ -129,53 +129,53 @@ my_demo/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/build
 .PHONY : my_demo/fast
 
-mainProj.o: mainProj.cpp.o
-.PHONY : mainProj.o
+back7_mech.o: back7_mech.cpp.o
+.PHONY : back7_mech.o
 
 # target to build an object file
-mainProj.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/mainProj.cpp.o
-.PHONY : mainProj.cpp.o
+back7_mech.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back7_mech.cpp.o
+.PHONY : back7_mech.cpp.o
 
-mainProj.i: mainProj.cpp.i
-.PHONY : mainProj.i
+back7_mech.i: back7_mech.cpp.i
+.PHONY : back7_mech.i
 
 # target to preprocess a source file
-mainProj.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/mainProj.cpp.i
-.PHONY : mainProj.cpp.i
+back7_mech.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back7_mech.cpp.i
+.PHONY : back7_mech.cpp.i
 
-mainProj.s: mainProj.cpp.s
-.PHONY : mainProj.s
+back7_mech.s: back7_mech.cpp.s
+.PHONY : back7_mech.s
 
 # target to generate assembly for a file
-mainProj.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/mainProj.cpp.s
-.PHONY : mainProj.cpp.s
+back7_mech.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/back7_mech.cpp.s
+.PHONY : back7_mech.cpp.s
 
-objInfo1.o: objInfo1.cpp.o
-.PHONY : objInfo1.o
+objInfo2.o: objInfo2.cpp.o
+.PHONY : objInfo2.o
 
 # target to build an object file
-objInfo1.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.o
-.PHONY : objInfo1.cpp.o
+objInfo2.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo2.cpp.o
+.PHONY : objInfo2.cpp.o
 
-objInfo1.i: objInfo1.cpp.i
-.PHONY : objInfo1.i
+objInfo2.i: objInfo2.cpp.i
+.PHONY : objInfo2.i
 
 # target to preprocess a source file
-objInfo1.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.i
-.PHONY : objInfo1.cpp.i
+objInfo2.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo2.cpp.i
+.PHONY : objInfo2.cpp.i
 
-objInfo1.s: objInfo1.cpp.s
-.PHONY : objInfo1.s
+objInfo2.s: objInfo2.cpp.s
+.PHONY : objInfo2.s
 
 # target to generate assembly for a file
-objInfo1.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo1.cpp.s
-.PHONY : objInfo1.cpp.s
+objInfo2.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/my_demo.dir/build.make CMakeFiles/my_demo.dir/objInfo2.cpp.s
+.PHONY : objInfo2.cpp.s
 
 # Help Target
 help:
@@ -186,12 +186,12 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... my_demo"
-	@echo "... mainProj.o"
-	@echo "... mainProj.i"
-	@echo "... mainProj.s"
-	@echo "... objInfo1.o"
-	@echo "... objInfo1.i"
-	@echo "... objInfo1.s"
+	@echo "... back7_mech.o"
+	@echo "... back7_mech.i"
+	@echo "... back7_mech.s"
+	@echo "... objInfo2.o"
+	@echo "... objInfo2.i"
+	@echo "... objInfo2.s"
 .PHONY : help
 
 

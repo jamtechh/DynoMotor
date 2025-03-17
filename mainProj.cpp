@@ -224,14 +224,9 @@ class RigidBody {
     
         void SetupRigidBody() {
             // Load visualization mesh
-            obj_file = std::string("my_project/CAD/View/") + obj_file + std::string(".obj");
+            obj_file = std::string("my_project/CAD/DynoObj2_shapes/") + obj_file + std::string(".obj");
             auto trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(obj_file));
             std::string coll_file = obj_file;
-            if (coll_file.find("body") == std::string::npos){
-                std::cout<<"\t\t\treplacing!!!!"<<std::endl;
-                coll_file.replace(coll_file.find("View"), 4, "Collision");
-                coll_file.replace(coll_file.find("_OBJ"), 4, "_Collision_OBJ");
-            }            
             auto coll_trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(coll_file));
             // std::cout<<"\t\t\t2"<<std::endl;
     
@@ -309,38 +304,38 @@ int main(int argc, char* argv[]) {
     body_ptrs[1]->SetFixed(true);
     body_ptrs[4]->SetFixed(true);
     body_ptrs[10]->SetFixed(true);
-    body_ptrs[2]->SetPos(positions[2]- posOffset - ChVector3d(0,5,0));
-    body_ptrs[3]->SetPos(positions[3]- posOffset + ChVector3d(0,5,0));
-    // body_ptrs[2]->SetPos(positions[2]- posOffset);
-    // body_ptrs[3]->SetPos(positions[3]- posOffset);
+    body_ptrs[2]->SetPos(std::get<1>(objData[2]) - posOffset);
+    body_ptrs[3]->SetPos(std::get<1>(objData[3]) - posOffset);
+    // body_ptrs[2]->SetPos(std::get<1>(objData[2]) - posOffset);
+    // body_ptrs[3]->SetPos(std::get<1>(objData[3]) - posOffset);
 
     auto Stator_body = body_ptrs[1];
     auto RotorWinding_body = body_ptrs[2];
     Frame_body = body_ptrs[4];
     
     double radA = 10, radB = 20;
-    auto mbody_gearA = makeGears(sys,radA,positions[2]- posOffset);
-    auto mbody_gearB = makeGears(sys,radB,positions[5]- posOffset);
-    auto mbody_gearC = makeGears(sys,radB,positions[6]- posOffset);
-    auto mbody_gearD = makeGears(sys,radB,positions[7]- posOffset);
-    auto mbody_gearE = makeGears(sys,radB,positions[8]- posOffset);
-    auto mbody_gearF = makeGears(sys,radA,positions[3]- posOffset);
+    auto mbody_gearA = makeGears(sys,radA,std::get<1>(objData[2]) - posOffset);
+    auto mbody_gearB = makeGears(sys,radB,std::get<1>(objData[5]) - posOffset);
+    auto mbody_gearC = makeGears(sys,radB,std::get<1>(objData[6]) - posOffset);
+    auto mbody_gearD = makeGears(sys,radB,std::get<1>(objData[7]) - posOffset);
+    auto mbody_gearE = makeGears(sys,radB,std::get<1>(objData[8]) - posOffset);
+    auto mbody_gearF = makeGears(sys,radA,std::get<1>(objData[3]) - posOffset);
 
     auto link_motorA = chrono_types::make_shared<ChLinkMotorRotationSpeed>();
-    link_motorA->Initialize(mbody_gearA, Frame_body, ChFrame<>(positions[2]- posOffset, jointOrientation));
-    link_motorA->SetSpeedFunction(chrono_types::make_shared<ChFunctionConst>(100));
+    link_motorA->Initialize(mbody_gearA, Frame_body, ChFrame<>(std::get<1>(objData[2]) - posOffset, jointOrientation));
+    link_motorA->SetSpeedFunction(chrono_types::make_shared<ChFunctionConst>(80));
     sys.AddLink(link_motorA);
 
-    createJoint(sys, body_ptrs[9], Frame_body, JointType::REVOLUTE, positions[9]- posOffset);
-    createJoint(sys, body_ptrs[9], mbody_gearC, JointType::FIXED, positions[9]- posOffset);
-    createJoint(sys, body_ptrs[9], mbody_gearD, JointType::FIXED, positions[9]- posOffset);
-    createJoint(sys, RotorWinding_body, mbody_gearA, JointType::FIXED, positions[2]- posOffset);
-    createJoint(sys, RotorWinding_body, Frame_body, JointType::REVOLUTE, positions[2]- posOffset);
-    createJoint(sys, body_ptrs[5], mbody_gearB, JointType::FIXED, positions[5]- posOffset);
-    createJoint(sys, body_ptrs[6], mbody_gearC, JointType::FIXED, positions[6]- posOffset);
-    createJoint(sys, body_ptrs[7], mbody_gearD, JointType::FIXED, positions[7]- posOffset);
-    createJoint(sys, body_ptrs[8], mbody_gearE, JointType::FIXED, positions[8]- posOffset);
-    createJoint(sys, body_ptrs[3], mbody_gearF, JointType::FIXED, positions[3]- posOffset);
+    createJoint(sys, body_ptrs[9], Frame_body, JointType::REVOLUTE, std::get<1>(objData[9]) - posOffset);
+    createJoint(sys, body_ptrs[9], mbody_gearC, JointType::FIXED, std::get<1>(objData[9]) - posOffset);
+    createJoint(sys, body_ptrs[9], mbody_gearD, JointType::FIXED, std::get<1>(objData[9]) - posOffset);
+    createJoint(sys, RotorWinding_body, mbody_gearA, JointType::FIXED, std::get<1>(objData[2]) - posOffset);
+    createJoint(sys, RotorWinding_body, Frame_body, JointType::REVOLUTE, std::get<1>(objData[2]) - posOffset);
+    createJoint(sys, body_ptrs[5], mbody_gearB, JointType::FIXED, std::get<1>(objData[5]) - posOffset);
+    createJoint(sys, body_ptrs[6], mbody_gearC, JointType::FIXED, std::get<1>(objData[6]) - posOffset);
+    createJoint(sys, body_ptrs[7], mbody_gearD, JointType::FIXED, std::get<1>(objData[7]) - posOffset);
+    createJoint(sys, body_ptrs[8], mbody_gearE, JointType::FIXED, std::get<1>(objData[8]) - posOffset);
+    createJoint(sys, body_ptrs[3], mbody_gearF, JointType::FIXED, std::get<1>(objData[3]) - posOffset);
 
     gearMate(sys, mbody_gearA, mbody_gearB, radA, radB);
     gearMate(sys, mbody_gearB, mbody_gearC, radB, radB);
@@ -433,7 +428,8 @@ int main(int argc, char* argv[]) {
     std::cout << "======= PRESS ENTER TO START THE SIMULATION =======" << "\n"; 
     std::cout << "===================================================" << "\n";
     std::cout << "\n";
-    double T_PWM = 0.04; //[s] PWM Period
+    // double T_PWM = 0.04; //[s] PWM Period
+    double T_PWM = 0.01; //[s] PWM Period
     double Duty_PWM = 80.0 / 100; //[s] PWM Duty
     double t_PWM_counter = 0.0; //[s] PWM Period
 
@@ -467,7 +463,7 @@ int main(int argc, char* argv[]) {
             ChVector3d Rotor_Euler_Vel = RotorWinding_body->GetAngVelLocal(); // Get the effective euler angular velocity 
             
             // ======== COMPUTE -> the Multiphysics ====================================================================================================================================================================
-            double ke_motor = -0.01; //[V/rpm]
+            double ke_motor = 0.01; //[V/rpm]
             double Vbackemf = ke_motor * Rotor_Euler_Vel[0];
             Imotor = res1[toLowerCase("VmotorVAR")].back();
 
@@ -489,7 +485,7 @@ int main(int argc, char* argv[]) {
                 }
 
             }
-            PWLIn["VmotorVAR"] = Vbackemf;
+            PWLIn["VmotorVAR"] = -Vbackemf;
             Generic_Circuit.InputDefinition(PWLIn, FlowIn);
 
             // ======== SAVE -> the needed variables ====================================================================================================================================================================
@@ -507,11 +503,11 @@ int main(int argc, char* argv[]) {
         std::vector<double> Rotor_Euler_Ang = GetEulerAngPos(RotorWinding_body, t_step_mechanic);
 
         // We apply the constant torque here !!!
-        double kt_motor = 0.6; //[Nm/A] 150
+        double kt_motor = 10.6; //[Nm/A] 150
         Torque_magnitude_RotorWinding_Stator = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]^2/[s^2])    
         RotorWinding_Stator_Torque = -1.0 * Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
         // RotorWinding_body->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
-        RotorWinding_body->AccumulateTorque(RotorWinding_Stator_Torque, true); // Apply to the body the force
+        // RotorWinding_body->AccumulateTorque(RotorWinding_Stator_Torque, true); // Apply to the body the force
         
         // ======== SAVE -> the needed variables ====================================================================================================================================================================
         OutputMap["alpha"].push_back(Rotor_Euler_Ang[0]);

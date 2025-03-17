@@ -147,8 +147,10 @@ endif()
 # files in your project. 
 #--------------------------------------------------------------
 
-add_executable(my_demo mainProj.cpp objInfo1.cpp)
-# add_executable(my_demo back5_cir.cpp)
+# add_executable(my_demo mainProj.cpp objInfo1.cpp)
+# add_executable(my_demo back7.cpp objInfo1.cpp)
+add_executable(my_demo back7_mech.cpp objInfo2.cpp)
+# add_executable(my_demo back4.cpp objInfo1.cpp)
 # add_executable(my_demo mainProj.cpp)
 # message("\n\n\n\n\n\n added objinfo file success !!!!!!!!!")
 #--------------------------------------------------------------
