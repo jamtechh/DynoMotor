@@ -38,9 +38,9 @@ std::vector<ChVector3d> inertiaXX = {ChVector3d(0,0,0),
 };
 
 std::vector<double> mass = {0.0,
-    2.759,
+    2.7008,     // Corrected
     1.542,
-    0.075,
+    0.0741,     // Corrected
     0.006,
     0.016,
     0.006,

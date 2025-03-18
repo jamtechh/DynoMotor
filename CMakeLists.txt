@@ -150,9 +150,9 @@ endif()
 # add_executable(my_demo mainProj.cpp objInfo1.cpp)
 
 # add_executable(my_demo back8.cpp objInfo1.cpp)
-add_executable(my_demo back8_mech.cpp objInfo2.cpp)
+# add_executable(my_demo back8_mech.cpp objInfo2.cpp)
 
-# add_executable(my_demo back4.cpp objInfo1.cpp)
+add_executable(my_demo back9.cpp objInfo2.cpp)
 # add_executable(my_demo mainProj.cpp)
 # message("\n\n\n\n\n\n added objinfo file success !!!!!!!!!")
 #--------------------------------------------------------------
