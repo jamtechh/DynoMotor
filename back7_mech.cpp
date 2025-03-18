@@ -135,7 +135,7 @@ std::shared_ptr<ChBodyEasyCylinder> makeGears(ChSystemNSC& sys, float rad, const
     auto mat = chrono_types::make_shared<ChContactMaterialNSC>();
     auto vis_mat = chrono_types::make_shared<ChVisualMaterial>();
     vis_mat->SetKdTexture(GetChronoDataFile("textures/pinkwhite.png"));
-    auto gear = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, rad, 0.4, 1000, true, false, mat);
+    auto gear = chrono_types::make_shared<ChBodyEasyCylinder>(ChAxis::Z, rad, 0.1, 0.1, true, false, mat);
     gear->SetPos(position);
     gear->SetRot(QuatFromAngleZ(CH_PI_2));
     gear->GetVisualShape(0)->SetMaterial(0, vis_mat);
@@ -235,7 +235,7 @@ class RigidBody {
             // std::cout<<"\t\t\t3"<<std::endl;
     
             // Calculate mass_calc and inertia_calc
-            density = 10000.00 / (1e9);
+            density = 8970.00 / (1e9);
             mass_calc = density * volume;
             inertia_calc = density * geometric_inertia_calc;
     
@@ -323,7 +323,7 @@ int main(int argc, char* argv[]) {
     createJoint(sys, body_ptrs[8], mbody_gearE, JointType::FIXED, std::get<1>(objData[8]) - posOffset);
     createJoint(sys, body_ptrs[3], mbody_gearF, JointType::FIXED, std::get<1>(objData[3]) - posOffset);
 
-    gearMate(sys, mbody_gearA, mbody_gearB, radA, radB);
+    gearMate(sys, RotorWinding_body, body_ptrs[5], radA, radB);
     gearMate(sys, mbody_gearB, mbody_gearC, radB, radB);
     gearMate(sys, mbody_gearD, mbody_gearE, radB, radB);
     gearMate(sys, mbody_gearE, mbody_gearF, radB, radA);
@@ -365,7 +365,7 @@ int main(int argc, char* argv[]) {
     vis->Initialize();
     vis->AddLogo();
     vis->AddSkyBox();
-    vis->AddCamera(ChVector3d(-550, -200, -500), std::get<1>(objData[2]) - posOffset);
+    vis->AddCamera(ChVector3d(-50, 20, -500), std::get<1>(objData[2]) - posOffset);
     // auto camera = vis->GetActiveCamera();
     vis->AddLight(ChVector3d(0, 0, -900), 950, ChColor(0.1f, 0.1f, 0.1f));
     vis->AddLight(ChVector3d(0, 0, 900), 1100, ChColor(0.1f, 0.1f, 0.1f));
@@ -439,7 +439,7 @@ int main(int argc, char* argv[]) {
     int brake_flag = 1; // Set a brake flag in the case you want to stop the simulation before: t_simulation_STOP
     double Imotor = 0.0;
     double T_PWM = 0.004; //[s] PWM Period
-    double Duty_PWM = 50.0 / 100; //[s] PWM Duty
+    double Duty_PWM = 80.0 / 100; //[s] PWM Duty
     double t_PWM_counter = 0.0; //[s] PWM Period
      
     double Torque_magnitude_RotorWinding_Stator = 0.0 * 1e3 * 1e3; //[Nm] converted to ([kg]-[mm]-[s]) 
@@ -467,8 +467,9 @@ int main(int argc, char* argv[]) {
             ChVector3d Rotor_Euler_Vel = RotorWinding_body->GetAngVelLocal(); // Get the effective euler angular velocity 
             
             // ======== COMPUTE -> the Multiphysics ====================================================================================================================================================================
-            double ke_motor = 0.001; //[V/rpm]
-            double Vbackemf = ke_motor * Rotor_Euler_Vel[0];
+            double kv_motor = 100;
+            double ke_motor = 1/kv_motor; //[V/rpm]
+            double Vbackemf = ke_motor * Rotor_Euler_Vel[2];
             Imotor = res1[toLowerCase("VmotorVAR")].back();
 
             // ======== UPDATE -> the Electronic parameters ====================================================================================================================================================================
@@ -497,7 +498,7 @@ int main(int argc, char* argv[]) {
             OutputMap["n3"].push_back(res1["n3"].back());
             OutputMap["VmotorVAR"].push_back(res1[toLowerCase("VmotorVAR")].back());
             OutputMap["t_electronics"].push_back(t_sim_mechanics);
-            OutputMap["dalpha"].push_back(Rotor_Euler_Vel[0]);
+            OutputMap["dalpha"].push_back(Rotor_Euler_Vel[2]);
 
             // ======== UPDATE -> the TIME variables ====================================================================================================================================================================
             t_sampling_electronic_counter = 0;      // The variable is nulled to re-start with the counter for the next call of the electronic domain
@@ -507,7 +508,7 @@ int main(int argc, char* argv[]) {
         std::vector<double> Rotor_Euler_Ang = GetEulerAngPos(RotorWinding_body, t_step_mechanic);
 
         // We apply the constant torque here !!!
-        double kt_motor = 100.6; //[Nm/A] 150
+        double kt_motor = 10.6; //[Nm/A] 150
         Torque_magnitude_RotorWinding_Stator = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]^2/[s^2])    
         RotorWinding_Stator_Torque = -1.0 * Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
         RotorWinding_body->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body

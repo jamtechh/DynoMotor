@@ -69,44 +69,44 @@ include CMakeFiles/my_demo.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/my_demo.dir/flags.make
 
-CMakeFiles/my_demo.dir/back8.cpp.o: CMakeFiles/my_demo.dir/flags.make
-CMakeFiles/my_demo.dir/back8.cpp.o: /home/saad/Downloads/dynoMotor/back8.cpp
-CMakeFiles/my_demo.dir/back8.cpp.o: CMakeFiles/my_demo.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/saad/Downloads/dynoMotor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/my_demo.dir/back8.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/my_demo.dir/back8.cpp.o -MF CMakeFiles/my_demo.dir/back8.cpp.o.d -o CMakeFiles/my_demo.dir/back8.cpp.o -c /home/saad/Downloads/dynoMotor/back8.cpp
+CMakeFiles/my_demo.dir/back8_mech.cpp.o: CMakeFiles/my_demo.dir/flags.make
+CMakeFiles/my_demo.dir/back8_mech.cpp.o: /home/saad/Downloads/dynoMotor/back8_mech.cpp
+CMakeFiles/my_demo.dir/back8_mech.cpp.o: CMakeFiles/my_demo.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/saad/Downloads/dynoMotor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/my_demo.dir/back8_mech.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/my_demo.dir/back8_mech.cpp.o -MF CMakeFiles/my_demo.dir/back8_mech.cpp.o.d -o CMakeFiles/my_demo.dir/back8_mech.cpp.o -c /home/saad/Downloads/dynoMotor/back8_mech.cpp
 
-CMakeFiles/my_demo.dir/back8.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/my_demo.dir/back8.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/saad/Downloads/dynoMotor/back8.cpp > CMakeFiles/my_demo.dir/back8.cpp.i
+CMakeFiles/my_demo.dir/back8_mech.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/my_demo.dir/back8_mech.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/saad/Downloads/dynoMotor/back8_mech.cpp > CMakeFiles/my_demo.dir/back8_mech.cpp.i
 
-CMakeFiles/my_demo.dir/back8.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/my_demo.dir/back8.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/saad/Downloads/dynoMotor/back8.cpp -o CMakeFiles/my_demo.dir/back8.cpp.s
+CMakeFiles/my_demo.dir/back8_mech.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/my_demo.dir/back8_mech.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/saad/Downloads/dynoMotor/back8_mech.cpp -o CMakeFiles/my_demo.dir/back8_mech.cpp.s
 
-CMakeFiles/my_demo.dir/objInfo1.cpp.o: CMakeFiles/my_demo.dir/flags.make
-CMakeFiles/my_demo.dir/objInfo1.cpp.o: /home/saad/Downloads/dynoMotor/objInfo1.cpp
-CMakeFiles/my_demo.dir/objInfo1.cpp.o: CMakeFiles/my_demo.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/saad/Downloads/dynoMotor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/my_demo.dir/objInfo1.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/my_demo.dir/objInfo1.cpp.o -MF CMakeFiles/my_demo.dir/objInfo1.cpp.o.d -o CMakeFiles/my_demo.dir/objInfo1.cpp.o -c /home/saad/Downloads/dynoMotor/objInfo1.cpp
+CMakeFiles/my_demo.dir/objInfo2.cpp.o: CMakeFiles/my_demo.dir/flags.make
+CMakeFiles/my_demo.dir/objInfo2.cpp.o: /home/saad/Downloads/dynoMotor/objInfo2.cpp
+CMakeFiles/my_demo.dir/objInfo2.cpp.o: CMakeFiles/my_demo.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/saad/Downloads/dynoMotor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/my_demo.dir/objInfo2.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/my_demo.dir/objInfo2.cpp.o -MF CMakeFiles/my_demo.dir/objInfo2.cpp.o.d -o CMakeFiles/my_demo.dir/objInfo2.cpp.o -c /home/saad/Downloads/dynoMotor/objInfo2.cpp
 
-CMakeFiles/my_demo.dir/objInfo1.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/my_demo.dir/objInfo1.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/saad/Downloads/dynoMotor/objInfo1.cpp > CMakeFiles/my_demo.dir/objInfo1.cpp.i
+CMakeFiles/my_demo.dir/objInfo2.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/my_demo.dir/objInfo2.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/saad/Downloads/dynoMotor/objInfo2.cpp > CMakeFiles/my_demo.dir/objInfo2.cpp.i
 
-CMakeFiles/my_demo.dir/objInfo1.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/my_demo.dir/objInfo1.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/saad/Downloads/dynoMotor/objInfo1.cpp -o CMakeFiles/my_demo.dir/objInfo1.cpp.s
+CMakeFiles/my_demo.dir/objInfo2.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/my_demo.dir/objInfo2.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/saad/Downloads/dynoMotor/objInfo2.cpp -o CMakeFiles/my_demo.dir/objInfo2.cpp.s
 
 # Object files for target my_demo
 my_demo_OBJECTS = \
-"CMakeFiles/my_demo.dir/back8.cpp.o" \
-"CMakeFiles/my_demo.dir/objInfo1.cpp.o"
+"CMakeFiles/my_demo.dir/back8_mech.cpp.o" \
+"CMakeFiles/my_demo.dir/objInfo2.cpp.o"
 
 # External object files for target my_demo
 my_demo_EXTERNAL_OBJECTS =
 
-bin/my_demo: CMakeFiles/my_demo.dir/back8.cpp.o
-bin/my_demo: CMakeFiles/my_demo.dir/objInfo1.cpp.o
+bin/my_demo: CMakeFiles/my_demo.dir/back8_mech.cpp.o
+bin/my_demo: CMakeFiles/my_demo.dir/objInfo2.cpp.o
 bin/my_demo: CMakeFiles/my_demo.dir/build.make
 bin/my_demo: /usr/lib/gcc/x86_64-linux-gnu/14/libgomp.so
 bin/my_demo: /usr/lib/x86_64-linux-gnu/libpthread.a
