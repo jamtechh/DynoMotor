@@ -1,3 +1,0 @@
-/home/jamiul/Downloads/dynoMotor/build/CMakeFiles/my_demo.dir
-/home/jamiul/Downloads/dynoMotor/build/CMakeFiles/edit_cache.dir
-/home/jamiul/Downloads/dynoMotor/build/CMakeFiles/rebuild_cache.dir
