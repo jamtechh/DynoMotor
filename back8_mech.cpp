@@ -266,6 +266,7 @@ int main(int argc, char* argv[]) {
     SpringDamper_Orientation.SetFromAngleAxis(90.0 * M_PI / 180.0, ChVector3d(0, 0, 1)); // !!! IMPORTANT !!! the Torsional Spring is oriented always arround Z-axis -> Set correctly the orientation 
     jointOrientation.SetFromAngleAxis(90.0 * (CH_PI / 180.0), ChVector3d(0, 0, 1));
     ChVector3d TorqueDir(0, 0, 1); // IMPORTANT!! the direction vertex need to be normalized 
+    int AngVelAxis = 2;     // 0-x, 1-y, 2-z
     
 
     float len = 50, thickk = 2;
@@ -383,25 +384,31 @@ int main(int argc, char* argv[]) {
     ChRealtimeStepTimer realtime_timer;
 
     // ===========================================================================================================================================================================================
-    // ======== SET THE MULTI-PHYSICS SYMULATION PARAMETERS ====================================================================================================================================
-    // ===========================================================================================================================================================================================
-    // ======== Mechanical domain ====================================================================================================================================================================
-    double f_ToSample_mechanic = 1.0e3;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
+    double t_simulation_STOP = 1.0; //[s]
+    double f_ToSample_mechanic = 1.0e5;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
     double t_step_mechanic = 1 / f_ToSample_mechanic; // [s]
     // ======== Electronic domain ====================================================================================================================================================================
-    double f_ToSample_electronic = 1.0e3;//1.0e5;// 0.5e4; // [Hz]          Frequency at which the electronic domain is called respect to the global time line
+    double f_ToSample_electronic = 1.0e5;//1.0e5;// 0.5e4; // [Hz]          Frequency at which the electronic domain is called respect to the global time line
     double T_ToSample_electronic = 1 / f_ToSample_electronic;               // Period at which the electronic domain is called respect to the global time line
-    double T_sampling_electronic = t_step_mechanic;                         // Time window of the electronic (SPICE) simulation
-    double t_step_electronic = 1.0e-5;//1.0e-6; // [s]                                  Discretization of the electronic time window
+    double t_step_electronic = 1.0e-6;//1.0e-6; // [s]                                  Discretization of the electronic time window
+    // ===========================================================================================================================================================================================
+    double t_sim_mechanics = 0.0; //[s] 
+    double t_sim_electronics = 0.0; //[s]
+    double t_sampling_electronic_counter = 0; //[s] This variable is needed to count the event at which the Electronic domain need to be called respect to the Global Time-line
+
+    double Imotor = 0.0;
+    double T_PWM = 0.001; //[s] PWM Period
+    double Duty_PWM = 80.0 / 100; //[s] PWM Duty
+    double t_PWM_counter = 0.0; //[s] PWM Period
+     
+    double motorTorque = 0.0 * 1e3 * 1e3; //[Nm] converted to ([kg]-[mm]-[s]) 
+    ChVector3d rotorTorque = motorTorque * TorqueDir;
+    double loadTorque = 0.0;
+    ChVector3d dynoTorque = loadTorque * TorqueDir;
 
     // ===========================================================================================================================================================================================
     // ======== INITIALIZE THE ELECTRONIC CIRCUIT ====================================================================================================================================================================
     // ===========================================================================================================================================================================================
-    std::string Netlist_location = "../data/my_project/SPICE/Circuit_Netlist.cir";   
-    
-    ChElectronicGeneric Generic_Circuit(Netlist_location, t_step_electronic); 
-    Generic_Circuit.Initialize(t_step_mechanic);
-
     std::map<std::string, double> PWLIn = {
         {"VmotorVAR", 0.0},
         {"VpwmVAR", 0.0}
@@ -422,32 +429,14 @@ int main(int argc, char* argv[]) {
     OutputMap["T_magnetic"] = {};
     OutputMap["T_motor"] = {};
 
+    std::string Netlist_location = "../data/my_project/SPICE/Circuit_Netlist.cir";   
+    ChElectronicGeneric Generic_Circuit(Netlist_location, t_step_electronic); 
+    Generic_Circuit.Initialize(t_step_mechanic);
     Generic_Circuit.InputDefinition(PWLIn, FlowIn);
 
-    // ===========================================================================================================================================================================================
-    // ======== MULTI-PHYSICS CO-SYMULATION LOOP ====================================================================================================================================================================
-    // ===========================================================================================================================================================================================
-    // ======== SET -> the Multi-physics timeline ====================================================================================================================================================================
-    double t_simulation_STOP = 1.0;//400.0e-3; //[s]
-    double t_sim_mechanics = 0.0; //[s] 
-    double t_sim_electronics = 0.0; //[s]
-    double t_sampling_electronic_counter = 0; //[s] This variable is needed to count the event at which the Electronic domain need to be called respect to the Global Time-line
-    int brake_flag = 1; // Set a brake flag in the case you want to stop the simulation before: t_simulation_STOP
-    double Imotor = 0.0;
-    double T_PWM = 0.004; //[s] PWM Period
-    double Duty_PWM = 50.0 / 100; //[s] PWM Duty
-    double t_PWM_counter = 0.0; //[s] PWM Period
-     
-    double TorqueVal = 0.0 * 1e3 * 1e3; //[Nm] converted to ([kg]-[mm]-[s]) 
-    double loadTorque;
-    ChVector3d rotorTorque = TorqueVal * TorqueDir;
+    high_resolution_clock::time_point start = high_resolution_clock::now();
 
-    while (t_sim_mechanics < t_simulation_STOP && brake_flag == 1) {
-        // ======== RUN -> the Irrlicht visualizer ====================================================================================================================================================================
-        vis->Run();
-        //tools::drawGrid(vis.get(), 2, 2, 30, 30, ChCoordsys<>(ChVector3d(0, 0.01, 0), QuatFromAngleX(CH_PI_2)),ChColor(0.3f, 0.3f, 0.3f), true);
-        if (vis->Run()) { brake_flag = 1; } // Check if the User wanted to stop de simulation before: t_simulation_STOP
-        else { brake_flag = 0; }
+    while (t_sim_mechanics < t_simulation_STOP && vis->Run()) {
         vis->BeginScene();
         vis->Render();
         vis->EndScene();
@@ -459,13 +448,17 @@ int main(int argc, char* argv[]) {
             
             double kv_motor = 100;
             double ke_motor = 1/kv_motor; //[V/rpm]
-            double Vbackemf = ke_motor * Rotor_Euler_Vel[2];
+            double Vbackemf = ke_motor * Rotor_Euler_Vel[AngVelAxis];
             Imotor = res1[toLowerCase("VmotorVAR")].back();
             
+            // if(1){
+                // for (const auto& [key, values] : res1) {
+                //     std::cout << key << "= ";std::cout << res1[key].back()<<"   \t";}
+                // std::cout << t_sim_mechanics << "\n";}
             if(1){
-                for (const auto& [key, values] : res1) {
-                    std::cout << key << "= ";std::cout << res1[key].back()<<"   \t";}
-                std::cout << "\n";}
+                std::cout << "VmotorVar = " << res1["vmotorvar"].back()<<"\t";
+                std::cout << "t_sim = " << t_sim_mechanics * 16.620 <<"\t";
+            }
             double dcV = 12.0; // Volt
             if (t_sim_mechanics >= 0.0){
                 if (t_PWM_counter <= T_PWM * Duty_PWM){
@@ -477,9 +470,10 @@ int main(int argc, char* argv[]) {
             Generic_Circuit.InputDefinition(PWLIn, FlowIn);
 
             OutputMap["n1"].push_back(res1["n1"].back());
-            OutputMap["n3"].push_back(dcV-res1["n3"].back());
+            // OutputMap["n3"].push_back(dcV-res1["n3"].back());
+            OutputMap["n3"].push_back(Vbackemf);
             OutputMap["VmotorVAR"].push_back(-res1[toLowerCase("VmotorVAR")].back());
-            OutputMap["dalpha"].push_back(Rotor_Euler_Vel[2]);
+            OutputMap["dalpha"].push_back(Rotor_Euler_Vel[AngVelAxis]);
 
             // ======== UPDATE -> the TIME variables ====================================================================================================================================================================
             t_sampling_electronic_counter = 0;      // The variable is nulled to re-start with the counter for the next call of the electronic domain
@@ -490,21 +484,23 @@ int main(int argc, char* argv[]) {
 
         // We apply the constant torque here !!!
         double kt_motor = 0.6; //[Nm/A]
-        TorqueVal = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]^2/[s^2])    
-        rotorTorque = -1.0 * TorqueVal * TorqueDir;
+        motorTorque = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]^2/[s^2])    
+        rotorTorque = -1.0 * motorTorque * TorqueDir;
         RotorBody->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
         RotorBody->AccumulateTorque(rotorTorque, true); // Apply to the body the force
         
-        loadTorque = 4 * 1e3 * 1e3;
-        rotorTorque = 1.0 * loadTorque * TorqueDir;
-        body_ptrs[3]->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
-        body_ptrs[3]->AccumulateTorque(rotorTorque, true); // Apply to the body the force
+        double sinWave = 0.75 * sin(40 * t_sim_mechanics);
+        // angle = fmod(angle, M_PI);  // Use fmod to ensure angle is within 0 to π
+        double loadTorque = 4e6 * 1;
+        dynoTorque = 1.0 * loadTorque * TorqueDir;
+        // body_ptrs[3]->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
+        // body_ptrs[3]->AccumulateTorque(dynoTorque, true); // Apply to the body the force
         
 
         // ======== SAVE -> the needed variables ====================================================================================================================================================================
         OutputMap["alpha"].push_back(Rotor_Euler_Ang[0]);
         OutputMap["t_mechanics"].push_back(t_sim_mechanics);
-        OutputMap["T_motor"].push_back(-1.0 * TorqueVal);
+        OutputMap["T_motor"].push_back(-1.0 * motorTorque);
         OutputMap["t_electronics"].push_back(loadTorque);
 
         // ======== RUN -> the Mechanic solver ====================================================================================================================================
@@ -515,6 +511,12 @@ int main(int argc, char* argv[]) {
         t_sampling_electronic_counter += t_step_mechanic;
         t_sim_electronics += t_step_mechanic;
         t_sim_mechanics += t_step_mechanic;
+
+        high_resolution_clock::time_point end = high_resolution_clock::now();
+        duration<double, std::milli> duration_sec = std::chrono::duration_cast<duration<double, std::milli>>(end - start);
+        std::cout << "time: " << duration_sec.count() << "ms";
+        std::cout << "loadTorque: " << loadTorque/1e6 << "Nm";
+        std::cout << std::endl;
     }
     json j; // Create a json object to contain the output data
     for (const auto& item : OutputMap) { // Populate the JSON object with data

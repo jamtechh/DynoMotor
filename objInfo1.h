@@ -2,6 +2,7 @@
 #ifndef OBJINFO1_H
 #define OBJINFO1_H
 
+#include <chrono>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -49,6 +50,8 @@ using namespace chrono;
 using namespace chrono::irrlicht;
 using namespace ::chrono::powerelectronics;
 using json = nlohmann::json;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration;
 
 using namespace irr; // Use the main namespaces of Irrlicht
 using namespace irr::core;

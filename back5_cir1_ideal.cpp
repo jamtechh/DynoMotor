@@ -514,13 +514,13 @@ int main(int argc, char* argv[]) {
     // ======== SET THE MULTI-PHYSICS SYMULATION PARAMETERS ====================================================================================================================================
     // ===========================================================================================================================================================================================
     // ======== Mechanical domain ====================================================================================================================================================================
-    double f_ToSample_mechanic = 1.0e3;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
+    double f_ToSample_mechanic = 1.0e5;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
     double t_step_mechanic = 1 / f_ToSample_mechanic; // [s]
     // ======== Electronic domain ====================================================================================================================================================================
-    double f_ToSample_electronic = 1.0e3;//1.0e5;// 0.5e4; // [Hz]                              Frequency at which the electronic domain is called respect to the global time line
+    double f_ToSample_electronic = 1.0e5;//1.0e5;// 0.5e4; // [Hz]                              Frequency at which the electronic domain is called respect to the global time line
     double T_ToSample_electronic = 1 / f_ToSample_electronic;               // Period at which the electronic domain is called respect to the global time line
     double T_sampling_electronic = t_step_mechanic;                         // Time window of the electronic (SPICE) simulation
-    double t_step_electronic = 1.0e-5;//1.0e-6; // [s]                                  Discretization of the electronic time window
+    double t_step_electronic = 1.0e-6;//1.0e-6; // [s]                                  Discretization of the electronic time window
 
     // ===========================================================================================================================================================================================
     // ======== MULTI-PHYSICS CO-SYMULATION LOOP ====================================================================================================================================================================
@@ -533,7 +533,7 @@ int main(int argc, char* argv[]) {
     int brake_flag = 1; // Set a brake flag in the case you want to stop the simulation before: t_simulation_STOP
     double Imotor = 0.0;
     double T_PWM = 0.004; //[s] PWM Period
-    double Duty_PWM = 100.0 / 100; //[s] PWM Duty
+    double Duty_PWM = 20.0 / 100; //[s] PWM Duty
     double t_PWM_counter = 0.0; //[s] PWM Period
     // ===========================================================================================================================================================================================
     // ======== INITIALIZE THE ELECTRONIC CIRCUIT ====================================================================================================================================================================
@@ -613,7 +613,6 @@ int main(int argc, char* argv[]) {
                 {
                     t_PWM_counter = 0.0;
                 }
-
             }
             PWLIn["VmotorVAR"] = -Vbackemf;
             Generic_Circuit.InputDefinition(PWLIn, FlowIn);
@@ -634,7 +633,7 @@ int main(int argc, char* argv[]) {
 
         // ======== TORQUE TEMEPLATE ====================================================================================================================================================================
         // ======== UPDATE -> Forces and Torques: RotorWinding - Stator ====================================================================================================================================================================
-        double kt_motor = 1.0; //[Nm/A] 150
+        double kt_motor = 10.0; //[Nm/A] 150
         Torque_magnitude_RotorWinding_Stator = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])    
         RotorWinding_Stator_Torque = -1.0 * Torque_magnitude_RotorWinding_Stator * Torque_direction_RotorWinding_Stator;
         RotorWinding_body->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
