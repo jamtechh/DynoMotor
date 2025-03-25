@@ -40,7 +40,7 @@
 #include "chrono_powerelectronics/ChElectronicsCosimulation.h"
 #include "chrono_powerelectronics/circuits/ChElectronicMotor.h"
 #include "chrono_powerelectronics/circuits/ChElectronicCircuit.h"
-#include "chrono_powerelectronics/circuits/ChElectronicGeneric.h"
+// #include "chrono_powerelectronics/circuits/ChElectronicGeneric.h"
 
 // ===============================================================================================================================================================================
 // ======== NAMESPACES ==============================================================================================================================================
