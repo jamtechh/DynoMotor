@@ -339,7 +339,7 @@ int main(int argc, char* argv[]) {
     double springConst = 0.0; // [(N * m) / rad]
     springConst = springConst * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s]) 
     // ======== Torsional damping coefficient ===========================================================================================================================================================================
-    double dampConst = 0.00009; //[(N*m*s)/rad]
+    double dampConst = 0.0001; //[(N*m*s)/rad]
     double r_eq_RotorWinding_Stator_spr = dampConst * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])  
     // ======== Torsional spring/damper implementation ===========================================================================================================================================================================
     auto springDamper = chrono_types::make_shared<ChLinkRSDA>();
@@ -388,18 +388,20 @@ int main(int argc, char* argv[]) {
     ChRealtimeStepTimer realtime_timer;
 
     // ===========================================================================================================================================================================================
-    double t_simulation_STOP = 0.8; //[s]
+    double t_simulation_STOP = 0.2; //[s]
     double f_ToSample_mechanic = 1.0e4;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
-    double t_step_mechanic = 1 / f_ToSample_mechanic; // [s]
+    double t_step_mechanic = 1 / f_ToSample_mechanic; // [s] Simulation Timestep
+    double myStep = 1 / f_ToSample_mechanic; // [s] Simulation Timestep
     // ======== Electronic domain ====================================================================================================================================================================
     double f_ToSample_electronic = f_ToSample_mechanic;//1.0e5;// 0.5e4; // [Hz]          Frequency at which the electronic domain is called respect to the global time line
     double T_ToSample_electronic = 1 / f_ToSample_electronic;               // Period at which the electronic domain is called respect to the global time line
-    double t_step_electronic = 1.0e-5;//1.0e-6; // [s]                                  Discretization of the electronic time window
+    double t_step_electronic = 1.0e-5;//1.0e-6; // ngSpice Timestep                                 Discretization of the electronic time window
     double t_sampling_electronic_counter = 0; //[s] This variable is needed to count the event at which the Electronic domain need to be called respect to the Global Time-line
    
     double time_match_factor = 166.2;
     double time_offset = 49600;
-    double t_sim_mechanics = time_offset/(time_match_factor*1000); //[s] 
+    // double t_sim_mechanics = time_offset/(time_match_factor*1000); //[s] 
+    double t_sim_mechanics = 0.0; //[s] 
     double time_synch = time_offset;
     t_simulation_STOP += t_sim_mechanics;
 
@@ -421,7 +423,7 @@ int main(int argc, char* argv[]) {
         {"VpwmVAR", 0.0}
     };
     std::map<std::string, double> FlowIn = {
-        {"Rmotor", 0.35},            // checked
+        {"Rmotor", 0.4},            // checked
         {"Lmotor", 1.0e-5}          // checked
     };
 
@@ -479,20 +481,31 @@ int main(int argc, char* argv[]) {
     Generic_Circuit.Initialize(t_step_mechanic);
     Generic_Circuit.InputDefinition(PWLIn, FlowIn);
 
-    // ChElectronicCircuit dyno_Circuit(Netlist_location, t_step_electronic); 
-    // dyno_Circuit.Initialize(t_step_mechanic);
-    // dyno_Circuit.InputDefinition(dynoPWLIn, dynoFlowIn);
-
     high_resolution_clock::time_point start = high_resolution_clock::now();
 
     double Duty_PWM = 50.0; //[s] PWM Duty
+    double dcV = 8.6; // Volt
     int checkIndex = 309;
     int counter = 0;
     bool startPwm = 1;
     bool once = true;
+    double motorSpd = 0.0;
     double motorRPM = 0.0;
+    int pulseCount = 0;
+
+    double kv_Drop_factor = 0.0;
+    double kv_motor = 1700;       // rpm/v convert to rad per sec
+    double kv_adj = 0.0;
+    // double kv_motor = 1700;       // rpm/v convert to rad per sec
+    double ke_motor =  1/(kv_motor * ((2.0 * M_PI)/60.0)); //[V/rpm]
     // RotorBody->AccumulateTorque(0.058 * 1e3 * 1e3, true); // Apply to the body the force
+
     while (t_sim_mechanics <= t_simulation_STOP && vis->Run()) {
+        if(myStep > 0.02){
+            myStep = 0;
+            // if(Duty_PWM <= 90)Duty_PWM += 10;
+            std::cout<<Duty_PWM<<"\t";
+        }
         vis->BeginScene();
         vis->Render();
         vis->EndScene();
@@ -502,32 +515,38 @@ int main(int argc, char* argv[]) {
             Generic_Circuit.Advance(t_step_mechanic);
             auto res1 = Generic_Circuit.GetResult();
             Rotor_Euler_Vel = RotorBody->GetAngVelLocal(); // Get the effective euler angular velocity 
-            
-            motorRPM = Rotor_Euler_Vel[AngVelAxis] * (60.0 / (2.0 * M_PI)); // rad/s -> rpm
+            motorSpd = Rotor_Euler_Vel[AngVelAxis];      // rad/s
+            motorRPM = motorSpd * (60.0 / (2.0 * M_PI)); // rad/s -> rpm
             std::cout << "RPM: " <<  motorRPM << "\t";
+
+            // kv_Drop_factor = (89.0 - std::pow(abs(motorRPM), .5));    
+            // kv_adj = kv_motor + 150 - (kv_Drop_factor * 0.05);
+            kv_adj = kv_motor;
+            ke_motor =  1/(kv_adj * ((2.0 * M_PI)/60.0));       // kv was converted from rpm/v to rad/s/v
+            std::cout << "kv_adj: " <<  kv_Drop_factor << "\t";
+
             // for (const auto& [key, values] : res1) { 
             //     std::cout << key << ": " << res1[key].back() << "\t";
             // }
             
-            double kv_motor = 1700 * ((2.0 * M_PI)/60.0);       // rpm/v convert to rad per sec
-            // double kv_motor = 1700;       // rpm/v convert to rad per sec
-            double ke_motor =  1/kv_motor; //[V/rpm]
+            
             double Vbackemf = ke_motor * Rotor_Euler_Vel[AngVelAxis];
             Imotor = -res1[toLowerCase("VmotorVAR")].back();
             
-            double dcV = 7.6; // Volt
             if (t_sim_mechanics >= 0.0){
                 if (t_PWM_counter <= T_PWM * Duty_PWM/100 && startPwm){
                         PWLIn["VpwmVAR"] = dcV;     
                         t_PWM_counter += t_step_mechanic;
-                        // std::cout<<"\t\ton\n";
+                        // std::cout<<"\t\ton "<<pulseCount;
+                        // pulseCount++;
                     }
                 else{   
                     PWLIn["VpwmVAR"] = 0.0;     
                     t_PWM_counter += t_step_mechanic;
-                    // std::cout<<"\t\toff\n";
+                    // std::cout<<"\t\toff "<<pulseCount;
+                    // pulseCount++;
                 }
-                if (t_PWM_counter > T_PWM){t_PWM_counter = 0.0;}}
+                if (t_PWM_counter > T_PWM){t_PWM_counter = 0.0;pulseCount=0;}}
 
             PWLIn["VmotorVAR"] = -Vbackemf;
             Generic_Circuit.InputDefinition(PWLIn, FlowIn);
@@ -545,11 +564,15 @@ int main(int argc, char* argv[]) {
         std::vector<double> Rotor_Euler_Ang = GetEulerAngPos(RotorBody, t_step_mechanic);
 
         // We apply the constant torque here !!!
-        double kt_motor = 0.0335; //[Nm/A]
-            motorTorque = 100 * kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]^2/[s^2])
+        double kt_motor = .335; //[Nm/A]
+        if(1){
+            motorTorque = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]^2/[s^2])
             rotorTorque = motorTorque * TorqueDir;
             RotorBody->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
             RotorBody->AccumulateTorque(rotorTorque, true); // Apply to the body the force
+        }
+        // std::cout<<"Imotor "<< Imotor << '\t';
+        // std::cout<<"motorTorque "<< motorTorque << '\t';
             // std::cout<<"given\n";
 
         // ======== RUN -> the Mechanic solver ====================================================================================================================================
@@ -559,6 +582,7 @@ int main(int argc, char* argv[]) {
         // ======== UPDATE -> the Multi-physics timeline ====================================================================================================================================
         t_sampling_electronic_counter += t_step_mechanic;
         t_sim_mechanics += t_step_mechanic;
+        myStep += t_step_mechanic;
 
         high_resolution_clock::time_point end = high_resolution_clock::now();
         duration<double, std::milli> duration_sec = std::chrono::duration_cast<duration<double, std::milli>>(end - start);
@@ -572,8 +596,8 @@ int main(int argc, char* argv[]) {
         }
         if(!(time_synch < matched_time && matched_time < time_synch + 100 )){time_synch += 100;}
         
-        std::cout<<"matched_time "<< matched_time << '\t';
-        std::cout<<"time_passed "<< time_passed << '\t';
+        // std::cout<<"matched_time "<< matched_time << '\t';
+        // std::cout<<"time_passed "<< time_passed << '\t';
 
         // double sinWave = 0.75 * sin(400 * t_sim_mechanics); 
         loadTorque = InputMap["CounterTorque"][checkIndex];
@@ -586,7 +610,7 @@ int main(int argc, char* argv[]) {
         OutputMap["T_motor"].push_back(motorTorque);
         OutputMap["angVel_data"].push_back(InputMap["RPM"][checkIndex]);
         OutputMap["PWM"].push_back(InputMap["PWM"][checkIndex]);
-        OutputMap["t_mechanics"].push_back(matched_time/1000);
+        OutputMap["t_mechanics"].push_back(t_sim_mechanics);
 
         // std::cout << "loadTorque: " << loadTorque/1e6 << "Nm \t";
         std::cout << std::endl;
