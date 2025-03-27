@@ -27,7 +27,7 @@ std::vector<ChQuaternion<>> rotss = { ChQuaternion<>(0.0,0.0,0.0,0.0),
 std::vector<ChVector3d> inertiaXX = {ChVector3d(0,0,0),
     ChVector3d( 28809.63, 28809.63, 1282.39 ),
     ChVector3d( 29568.92, 73541.07, 45865.33 ),
-    ChVector3d( 17.171, 17.171, 6.269 ),
+    ChVector3d( 21.949, 21.949, 4.695 ),
     ChVector3d( 0.604, 0.604, 1.184 ),
     ChVector3d( 9.576, 9.786, 4.288 ),
     ChVector3d( 0.604, 0.604, 1.184 ),
@@ -38,9 +38,9 @@ std::vector<ChVector3d> inertiaXX = {ChVector3d(0,0,0),
 };
 
 std::vector<double> mass = {0.0,
-    2.759,
+    2.700,
     1.542,
-    0.075,
+    0.0741,
     0.006,
     0.016,
     0.006,
@@ -100,3 +100,29 @@ std::vector<std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3d, doub
 };
 
 ChVector3d posOffset =  positions[9];
+
+int seeCache(const std::string cacheFile){
+    // const std::string cacheFile = "cache.txt";
+    int runCount = 0;
+
+    // Read existing count
+    std::ifstream inFile(cacheFile);
+    if (inFile.is_open()) {
+        inFile >> runCount;
+        inFile.close();
+    }
+
+    // Increment count
+    runCount++;
+
+    // Write updated count
+    std::ofstream outFile(cacheFile);
+    if (outFile.is_open()) {
+        outFile << runCount;
+        outFile.close();
+    }
+
+    std::cout << "This program has been run " << runCount << " times.\n";
+
+    return runCount;
+}

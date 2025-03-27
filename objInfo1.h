@@ -72,4 +72,6 @@ extern std::vector<std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3
 
 extern ChVector3d posOffset;
 
+int seeCache(const std::string cacheFile);
+
 #endif // OBJINFO1_H

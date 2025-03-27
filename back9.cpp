@@ -429,7 +429,7 @@ int main(int argc, char* argv[]) {
     OutputMap["T_motor"] = {};
 
     std::string Netlist_location = "../data/my_project/SPICE/Circuit_Netlist.cir";   
-    ChElectronicGeneric Generic_Circuit(Netlist_location, t_step_electronic); 
+    ChElectronicCircuit Generic_Circuit(Netlist_location, t_step_electronic); 
     Generic_Circuit.Initialize(t_step_mechanic);
     Generic_Circuit.InputDefinition(PWLIn, FlowIn);
 
@@ -456,7 +456,7 @@ int main(int argc, char* argv[]) {
                 // for (const auto& [key, values] : res1) {
                 //     std::cout << key << "= ";std::cout << res1[key].back()<<"   \t";}
                 // std::cout << t_sim_mechanics << "\n";}
-            if(1){
+            if(0){
                 std::cout << "Current = " << -res1["vmotorvar"].back()<<" A\t";
                 std::cout << "t_sim = " << t_sim_mechanics <<"\t";
             }
@@ -514,9 +514,14 @@ int main(int argc, char* argv[]) {
         high_resolution_clock::time_point end = high_resolution_clock::now();
         duration<double, std::milli> duration_sec = std::chrono::duration_cast<duration<double, std::milli>>(end - start);
         auto time_passed = duration_sec.count() / 1000;
+        // std::cout << "time: " << time_passed << "s \t";
+        // std::cout << "RPM: " <<  Rotor_Euler_Vel[AngVelAxis]/2.08 << "\t";
+        // OutputMap["t_mechanics"].push_back(time_passed);
+
+        std::cout << "samp_time: " << t_sampling_electronic_counter << "\t";
+        std::cout << "elec_sim_time: " << t_sim_electronics << "\t";
+        std::cout << "sim_time: " << t_sim_mechanics << "\t";
         std::cout << "time: " << time_passed << "s \t";
-        std::cout << "RPM: " <<  Rotor_Euler_Vel[AngVelAxis]/2.08 << "\t";
-        OutputMap["t_mechanics"].push_back(time_passed);
         // std::cout << "loadTorque: " << loadTorque/1e6 << "Nm \t";
         std::cout << std::endl;
     }
