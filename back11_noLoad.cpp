@@ -1,51 +1,5 @@
 #include "objInfo1.h"
 
-// ======== Class: allows to compute the integral in-between a single simulation time-step through the cumulative trapezoidal method ==============================================================================================================================================
-class CumTrapezIntegration {
-public:
-    double Integrate(double& dt, double& f_new)
-    {
-        f_new1 = f_new;
-        dt1 = dt;
-        Integral_res += dt1 * ((f_old1 + f_new1) / 2);
-        //std::cout << "\n!!!!! f_new1: " << f_new1 << " !!!!!\n";            // DEBUG: Scope some needed results
-        //std::cout << "\n!!!!! f_old1: " << f_old1 << " !!!!!\n";            // DEBUG: Scope some needed results
-        f_old1 = f_new1;
-        return Integral_res;
-    }
-private:
-    double Integral_res = 0.0;
-    double f_old1 = 0.0;
-    double f_new1;
-    double dt1;
-};
-
-// ======== Method: calculate the effective Euler angular position of a body from the angular velocity along x-y-z- axis ==============================================================================================================================================
-std::vector<double> GetEulerAngPos(std::shared_ptr<chrono::ChBody> body, double& t_step_mechanic)
-{
-    // Get the effective angular velocity along x-y-z axis
-    ChVector3d body_Euler_Vel = body->GetAngVelLocal(); // Get the angular velocity 
-    double Rotor_Euler_dt_Yaw = body_Euler_Vel[0];
-    double Rotor_Euler_dt_Pitch = body_Euler_Vel[1];
-    double Rotor_Euler_dt_Roll = body_Euler_Vel[2];
-
-    // Create the object only once through a static variable (the static variable allows to initialize it only once during the execution of the entire code)
-    static CumTrapezIntegration body_Euler_Yaw_Integrator;
-    static CumTrapezIntegration body_Euler_Pitch_Integrator;
-    static CumTrapezIntegration body_Euler_Roll_Integrator;
-
-    // Compute the effective angular position along x-y-z axis
-    double body_Euler_Yaw = body_Euler_Yaw_Integrator.Integrate(t_step_mechanic, body_Euler_Vel[0]);
-    double body_Euler_Pitch = body_Euler_Pitch_Integrator.Integrate(t_step_mechanic, body_Euler_Vel[1]);
-    double body_Euler_Roll = body_Euler_Roll_Integrator.Integrate(t_step_mechanic, body_Euler_Vel[2]);
-
-    // Populate the result vector
-    std::vector<double> Results = { body_Euler_Yaw , body_Euler_Pitch, body_Euler_Roll };
-
-    return Results;
-}
-
-// ======== Method: converts all the characters in the input string to lowercase and returns the resulting string ==============================================================================================================================================
 std::string toLowerCase(const std::string& str) {
     std::string lower_str = str;
     std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(),
@@ -328,7 +282,7 @@ int main(int argc, char* argv[]) {
     createJoint(sys, body_ptrs[3], Frame_body, JointType::REVOLUTE, std::get<1>(objData[3]) - posOffset);
 
     gearMate(sys, RotorBody, body_ptrs[5], radA, radB);
-    gearMate(sys, body_ptrs[5], body_ptrs[6], radB, radB);
+    // gearMate(sys, body_ptrs[5], body_ptrs[6], radB, radB);
     // gearMate(sys, body_ptrs[7], body_ptrs[8], radB, radB);
     gearMate(sys, body_ptrs[8], body_ptrs[3], radB, radA);
     
@@ -339,7 +293,7 @@ int main(int argc, char* argv[]) {
     double springConst = 0.0; // [(N * m) / rad]
     springConst = springConst * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s]) 
     // ======== Torsional damping coefficient ===========================================================================================================================================================================
-    double dampConst = 0.0001; //[(N*m*s)/rad]
+    double dampConst = 0.00001; //[(N*m*s)/rad]
     double r_eq_RotorWinding_Stator_spr = dampConst * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])  
     // ======== Torsional spring/damper implementation ===========================================================================================================================================================================
     auto springDamper = chrono_types::make_shared<ChLinkRSDA>();
@@ -388,8 +342,8 @@ int main(int argc, char* argv[]) {
     ChRealtimeStepTimer realtime_timer;
 
     // ===========================================================================================================================================================================================
-    double t_simulation_STOP = 0.2; //[s]
-    double f_ToSample_mechanic = 1.0e4;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
+    double t_simulation_STOP = 0.6; //[s]
+    double f_ToSample_mechanic = 1.0e3;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
     double t_step_mechanic = 1 / f_ToSample_mechanic; // [s] Simulation Timestep
     double myStep = 1 / f_ToSample_mechanic; // [s] Simulation Timestep
     // ======== Electronic domain ====================================================================================================================================================================
@@ -422,9 +376,10 @@ int main(int argc, char* argv[]) {
         {"VmotorVAR", 0.0},
         {"VpwmVAR", 0.0}
     };
+    double R_motor = 0.2, L_motor = 1.0e-5;
     std::map<std::string, double> FlowIn = {
-        {"Rmotor", 0.4},            // checked
-        {"Lmotor", 1.0e-5}          // checked
+        {"Rmotor", R_motor},            // checked
+        {"Lmotor", L_motor}          // checked
     };
 
     std::map<std::string, std::vector<double>> OutputMap;
@@ -483,8 +438,8 @@ int main(int argc, char* argv[]) {
 
     high_resolution_clock::time_point start = high_resolution_clock::now();
 
-    double Duty_PWM = 50.0; //[s] PWM Duty
-    double dcV = 8.6; // Volt
+    double Duty_PWM = 100.0; //[s] PWM Duty
+    double dcV = 2.7; // Volt
     int checkIndex = 309;
     int counter = 0;
     bool startPwm = 1;
@@ -494,11 +449,12 @@ int main(int argc, char* argv[]) {
     int pulseCount = 0;
 
     double kv_Drop_factor = 0.0;
-    double kv_motor = 1700;       // rpm/v convert to rad per sec
+    // double kv_motor = 1800;       // rpm/v convert to rad per sec
+    double kv_motor = 1800;       // rpm/v convert to rad per sec
     double kv_adj = 0.0;
     // double kv_motor = 1700;       // rpm/v convert to rad per sec
     double ke_motor =  1/(kv_motor * ((2.0 * M_PI)/60.0)); //[V/rpm]
-    // RotorBody->AccumulateTorque(0.058 * 1e3 * 1e3, true); // Apply to the body the force
+    double kt_motor = ke_motor; // .035; // Nm/A
 
     while (t_sim_mechanics <= t_simulation_STOP && vis->Run()) {
         if(myStep > 0.02){
@@ -523,7 +479,7 @@ int main(int argc, char* argv[]) {
             // kv_adj = kv_motor + 150 - (kv_Drop_factor * 0.05);
             kv_adj = kv_motor;
             ke_motor =  1/(kv_adj * ((2.0 * M_PI)/60.0));       // kv was converted from rpm/v to rad/s/v
-            std::cout << "kv_adj: " <<  kv_Drop_factor << "\t";
+            // std::cout << "kv_adj: " <<  kv_Drop_factor << "\t";
 
             // for (const auto& [key, values] : res1) { 
             //     std::cout << key << ": " << res1[key].back() << "\t";
@@ -561,18 +517,17 @@ int main(int argc, char* argv[]) {
         }
 
         // ======== EXTRACT -> Kinematic variables ====================================================================================================================================================================
-        std::vector<double> Rotor_Euler_Ang = GetEulerAngPos(RotorBody, t_step_mechanic);
+        // std::vector<double> Rotor_Euler_Ang = GetEulerAngPos(RotorBody, t_step_mechanic);
 
         // We apply the constant torque here !!!
-        double kt_motor = .335; //[Nm/A]
         if(1){
-            motorTorque = kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]^2/[s^2])
+            motorTorque = 1 * kt_motor * Imotor * 1e3 * 1e3; // Conversion to ([kg]-[mm]^2/[s^2])
             rotorTorque = motorTorque * TorqueDir;
             RotorBody->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
             RotorBody->AccumulateTorque(rotorTorque, true); // Apply to the body the force
         }
-        // std::cout<<"Imotor "<< Imotor << '\t';
-        // std::cout<<"motorTorque "<< motorTorque << '\t';
+        std::cout<<"Imotor "<< Imotor << '\t';
+        std::cout<<"motorTorque "<< motorTorque << '\t';
             // std::cout<<"given\n";
 
         // ======== RUN -> the Mechanic solver ====================================================================================================================================
@@ -627,12 +582,21 @@ int main(int argc, char* argv[]) {
     for (const auto& item : OutputMap) { // Populate the JSON object with data
         j[item.first] = item.second;
     }
+    j["meta"] = {
+        {"timestep", t_step_mechanic},
+        {"kv_motor", kv_adj},
+        {"kt_motor", kt_motor},
+        {"ke_motor", ke_motor},
+        {"Resistance", R_motor},
+        {"Inductance", L_motor},
+        {"dampConst", dampConst},
+        {"AppliedVolt", dcV},
+        {"version", "v1.2"} 
+    };
     // Export the output data in a .json file
     std::ofstream out_file(filename);
     out_file << j.dump(4); // "4" is the indentation parameter, you can change it to have a more or less readable structure
     out_file.close();
     std::cout << "\t exported" << std::endl;
-
-
     return 0;
 }

@@ -6,8 +6,8 @@ Rmotor n3 0 {parRmotor}
 VpwmVAR1 n1 0 PWL(0 0 1e-9 0)
 *VpwmVAR1 n1 0 DC 12
 X1 0 n1 1PS79SB30
-.param parRmotor=120
-.param parLmotor=0.3
+.param parRmotor=0.4
+.param parLmotor=0.00001
 .ic V(n1)=0
 *
 *1PS79SB30
