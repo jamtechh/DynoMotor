@@ -71,4 +71,51 @@ extern std::vector<std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3
 
 extern ChVector3d posOffset;
 
+
+int seeCache(const std::string cacheFile);
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   functions !!!!!!!!!!!!
+enum class JointType { FIXED, REVOLUTE, PRISMATIC };
+class CumTrapezIntegration {
+public:
+    double Integrate(double& dt, double& f_new);
+private:
+    double Integral_res = 0.0, f_old1 = 0.0, f_new1 = 0.0, dt1 = 0.0;
+};
+
+std::vector<double> GetEulerAngPos(std::shared_ptr<ChBody> body, double& t_step);
+std::string toLowerCase(const std::string& str);
+ChSystemNSC GravetySetup();
+
+void createJoint(ChSystemNSC& sys, std::shared_ptr<ChBody> a, std::shared_ptr<ChBody> b, JointType type, const ChVector3d& pos, bool showAxis = false);
+void gearMate(ChSystemNSC& sys, std::shared_ptr<ChBody> a, std::shared_ptr<ChBody> b, double radA, double radB);
+
+class RigidBody {
+public:
+    RigidBody(ChSystemNSC& sys, const std::string& file_name, bool is_fixed = false, bool transparent = false);
+    std::shared_ptr<ChBody> GetBody() const;
+    ChVector3d GetCOG() const;
+    std::tuple<std::shared_ptr<ChBody>, ChVector3d> GetBodyAndCOG() const;
+    void setPos(const ChVector3d& pos);
+    void setColor(const ChColor& color);
+    void setTransparent();
+    void setData(const std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3d, double, std::string>& data);
+
+private:
+    void SetupRigidBody(bool transparent);
+    ChSystemNSC& system;
+    std::string obj_file, file_name;
+    bool is_fixed, debugPrint = true;
+    double density, mass_calc, volume, mass_SW;
+    ChVector3d cog, position, inertia_SW;
+    ChQuaternion<> rotation;
+    ChMatrix33<> inertia_calc, geometric_inertia_calc;
+    std::shared_ptr<ChBody> body;
+    std::shared_ptr<ChVisualShapeTriangleMesh> mesh;
+};
+
+extern std::shared_ptr<ChBody> Frame_body;
+extern ChQuaternion<> jointOrientation;
+
+
 #endif // OBJINFO1_H

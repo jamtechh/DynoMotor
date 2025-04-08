@@ -456,7 +456,7 @@ int main(int argc, char* argv[]) {
                 //     std::cout << key << "= ";std::cout << res1[key].back()<<"   \t";}
                 // std::cout << t_sim_mechanics << "\n";}
             if(1){
-                std::cout << "VmotorVar = " << res1["vmotorvar"].back()<<"\t";
+                std::cout << "Current = " << res1["vmotorvar"].back()<<" A\t";
                 std::cout << "t_sim = " << t_sim_mechanics * 16.620 <<"\t";
             }
             double dcV = 7.5; // Volt
@@ -490,7 +490,6 @@ int main(int argc, char* argv[]) {
         RotorBody->AccumulateTorque(rotorTorque, true); // Apply to the body the force
         
         double sinWave = 0.75 * sin(40 * t_sim_mechanics);
-        // angle = fmod(angle, M_PI);  // Use fmod to ensure angle is within 0 to π
         double loadTorque = 4e6 * 1;
         dynoTorque = 1.0 * loadTorque * TorqueDir;
         body_ptrs[3]->EmptyAccumulators(); // Clean the body from the previous force/torque IMPORTANT!!!!: Uncomment this line if you never clean the F/T to this body
@@ -514,8 +513,8 @@ int main(int argc, char* argv[]) {
 
         high_resolution_clock::time_point end = high_resolution_clock::now();
         duration<double, std::milli> duration_sec = std::chrono::duration_cast<duration<double, std::milli>>(end - start);
-        std::cout << "time: " << duration_sec.count() / 1000 << "ms \t";
-        std::cout << "RPM: " <<  Rotor_Euler_Vel[AngVelAxis]/2.08 << "ms \t";
+        std::cout << "time: " << duration_sec.count() / 1000 << " s \t";
+        std::cout << "RPM: " <<  Rotor_Euler_Vel[AngVelAxis]/2.08 << "\t";
         // std::cout << "loadTorque: " << loadTorque/1e6 << "Nm \t";
         std::cout << std::endl;
     }
