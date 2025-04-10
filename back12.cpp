@@ -3,20 +3,22 @@
 double Duty_PWM = 100.0; //[s] PWM Duty
 double dcV = 7.4; // Volt
 double R_motor = 0.15;
-double L_motor = 1.0e-5;
+double L_motor = 6.0e-7;
 double kv_motor = 3216.117534;
 double ke_motor =  1/(kv_motor * ((2.0 * M_PI)/60.0)); //[V/rpm]
 // double ke_motor =  0.002969;
 double kt_motor = .001842; //[Nm/A]
 double dampConst = 0.000001; //[(N*m*s)/rad]
+double T_load = 0.001660;
 
 int main(int argc, char* argv[]) {
     if (argc > 1) dcV = std::stod(argv[1]);
-    if (argc > 2) R_motor = std::stod(  argv[2]);
-    if (argc > 3) L_motor = std::stod(  argv[3]);
-    if (argc > 4) kv_motor = std::stod( argv[4]);
-    if (argc > 5) kt_motor = std::stod( argv[5]);
-    if (argc > 6) dampConst = std::stod( argv[6]);
+    if (argc > 2) R_motor = std::stod(      argv[2]);
+    // if (argc > 3) L_motor = std::stod(      argv[3]);
+    if (argc > 3) ke_motor = std::stod(     argv[3]);
+    if (argc > 4) kt_motor = std::stod(     argv[4]);
+    if (argc > 5) dampConst = std::stod(    argv[5]);
+    if (argc > 6) T_load = std::stod(       argv[6]);
     
     int counter = 0;
     bool startPwm = 1;
@@ -70,27 +72,27 @@ int main(int argc, char* argv[]) {
     createJoint(sys, body_ptrs[3], Frame_body, JointType::REVOLUTE, std::get<1>(objData[3]) - posOffset);
 
     // printf("\t\t\t\t 7 \n\n\n");
-    gearMate(sys, RotorBody, body_ptrs[5], radA, radB);
+    // gearMate(sys, RotorBody, body_ptrs[5], radA, radB);
     // gearMate(sys, body_ptrs[5], body_ptrs[6], radB, radB);
     // gearMate(sys, body_ptrs[7], body_ptrs[8], radB, radB);
     gearMate(sys, body_ptrs[8], body_ptrs[3], radB, radA);
     
 
-    auto vis = chrono_types::make_shared<ChVisualSystemIrrlicht>();
-    vis->AttachSystem(&sys);
-    vis->SetWindowSize(1200, 800);
-    vis->SetWindowTitle("Modeling a simplified trackjed vehicle");
-    vis->Initialize();
-    vis->AddLogo();
-    vis->AddSkyBox();
-    vis->AddCamera(ChVector3d(-50, 20, -500), std::get<1>(objData[2]) - posOffset);
-    // auto camera = vis->GetActiveCamera();
-    vis->AddLight(ChVector3d(0, 0, -900), 950, ChColor(0.1f, 0.1f, 0.1f));
-    vis->AddLight(ChVector3d(0, 0, 900), 1100, ChColor(0.1f, 0.1f, 0.1f));
-    vis->AddLight(ChVector3d(-300, -500, 0), 2000, ChColor(0.1f, 0.1f, 0.1f));
-    vis->AddLight(ChVector3d(-300, 500, 0), 2000, ChColor(0.1f, 0.1f, 0.1f));
-    vis->EnableBodyFrameDrawing(true);
-    vis->EnableLinkFrameDrawing(true);
+    // auto vis = chrono_types::make_shared<ChVisualSystemIrrlicht>();
+    // vis->AttachSystem(&sys);
+    // vis->SetWindowSize(1200, 800);
+    // vis->SetWindowTitle("Modeling a simplified trackjed vehicle");
+    // vis->Initialize();
+    // vis->AddLogo();
+    // vis->AddSkyBox();
+    // vis->AddCamera(ChVector3d(-50, 20, -500), std::get<1>(objData[2]) - posOffset);
+    // // auto camera = vis->GetActiveCamera();
+    // vis->AddLight(ChVector3d(0, 0, -900), 950, ChColor(0.1f, 0.1f, 0.1f));
+    // vis->AddLight(ChVector3d(0, 0, 900), 1100, ChColor(0.1f, 0.1f, 0.1f));
+    // vis->AddLight(ChVector3d(-300, -500, 0), 2000, ChColor(0.1f, 0.1f, 0.1f));
+    // vis->AddLight(ChVector3d(-300, 500, 0), 2000, ChColor(0.1f, 0.1f, 0.1f));
+    // vis->EnableBodyFrameDrawing(true);
+    // vis->EnableLinkFrameDrawing(true);
     // camera->setTarget(irr::core::vector3df(1300, 0, 0));
 
     // ===========================================================================================================================================================================================
@@ -202,13 +204,13 @@ int main(int argc, char* argv[]) {
 
     double prevRpm = 0.0;
     double diffRpm = 0.0;
-    double threshold = 1;
-    while (t_sim_mechanics <= t_simulation_STOP && vis->Run()) {
+    double threshold = 0.5;
+    while (t_sim_mechanics <= t_simulation_STOP) {
         // printf("\t\t\t\t 13 - Frame Start\n\n\n");
-        
-        vis->BeginScene();
-        vis->Render();
-        vis->EndScene();
+        // vis->Run();
+        // vis->BeginScene();
+        // vis->Render();
+        // vis->EndScene();
     
         // printf("\t\t\t\t 14 - Visualization Done\n\n\n");
     
@@ -266,7 +268,7 @@ int main(int argc, char* argv[]) {
         rotorTorque = motorTorque * TorqueDir;
         RotorBody->EmptyAccumulators();
         RotorBody->AccumulateTorque(rotorTorque, true);
-	    RotorBody->AccumulateTorque(-1882.*ChVector3d(0,0,1), true);
+	    RotorBody->AccumulateTorque(-T_load*1e6*ChVector3d(0,0,1), true);
     
         // printf("\t\t\t\t 16 - Torque Applied to Rotor\n\n\n");
     
@@ -293,7 +295,7 @@ int main(int argc, char* argv[]) {
         OutputMap["t_mechanics"].push_back(t_sim_mechanics);
     
         // printf("\t\t\t\t 18 - Output Values Logged\n\n\n");
-        std::cout << dcV << ","  << motorRPM << ","  << Imotor << ","  << R_motor << ","  << kv_motor << ","  << kt_motor << '\n';
+        std::cout << dcV << ","  << motorRPM << ","  << Imotor << ","  << R_motor << ","  << kv_motor << ","  << kt_motor << ","  << L_motor << '\n';
     }
 
     // int readCount = seeCache("cache.txt");

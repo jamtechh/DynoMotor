@@ -1,14 +1,44 @@
 import subprocess
 import csv
 import matplotlib.pyplot as plt
+import os
+import re
+import pandas as pd
+
+kv_motor    = 3216.11753
+
+volt        = 3.5
+R_motor     = 0.2524
+L_motor     = 0.000001
+ke_motor    = 0.003104
+kt_motor    = 0.001740
+B           = 0.000001
+T_load      = 0.001688
+
+# Pattern: run_<number>_*.py
+pattern = re.compile(r"run_(\d+)_.*\.json$")
+
+latest_run = -1
+latest_file = None
+
+# Scan files in the current directory
+for filename in os.listdir("outputPlot/"):
+    match = pattern.match(filename)
+    if match:
+        run_num = int(match.group(1))
+        if run_num > latest_run:
+            latest_run = run_num
+            latest_file = filename
+
+
 def runAnalysis():
-    # Parameters
-    volt        = 3.5
-    R_motor     = 0.15
-    L_motor     = 0.0000006
-    kv_motor    = 3216.11753
-    kt_motor    = 0.001842
-    dampConst   = 0.000001
+    global volt      
+    global R_motor   
+    global L_motor   
+    global ke_motor  
+    global kt_motor  
+    global B 
+    global T_load    
 
     output_data = []
 
@@ -31,11 +61,14 @@ def runAnalysis():
             "./my_demo",
             str(dcV),
             str(R_motor),
-            str(L_motor),
-            str(kv_motor),
+            # str(L_motor),
+            str(ke_motor),
             str(kt_motor),
-            str(dampConst)
+            str(B),
+            str(T_load)
         ]
+        
+        # if dcV >=5:break
 
         # Run the C++ binary
         result = subprocess.run(args, capture_output=True, text=True)
@@ -48,7 +81,7 @@ def runAnalysis():
         # Parse the last line
         try:
             last_line = lines[-1].strip()
-            dcV, rpm, current, R_motor, kv_motor, kt_motor = map(float, last_line.split(','))
+            dcV, rpm, current, R_motor, kv_motor, kt_motor, L_motor = map(float, last_line.split(','))
                 
             print(f"Parsed values -> volt: {dcV}, rpm: {rpm}, current: {current}, L_motor: {L_motor}")
 
@@ -61,7 +94,6 @@ def runAnalysis():
             'current': current,
             'R_motor': R_motor,
             'L_motor': L_motor,
-            'kv_motor': kv_motor,
             'kt_motor': kt_motor
         })
 
@@ -123,9 +155,98 @@ def plotData():
     axs[1].grid(True)
     axs[1].legend()
 
+    info = ''
+    info += f"R_motor: {R_motor:.3f}\n"
+    info += f"L_motor: {L_motor:.7f}\n"
+    info += f"ke_motor: {ke_motor:.7f}\n"
+    info += f"kt_motor: {kt_motor:.7f}\n"
+    info += f"B: {B:.7f}\n"
+    info += f"T_load: {T_load:.7f}\n"
+
+    fig.text(
+        0.35, 0.05,  # X, Y position (from 0 to 1, figure coords)
+        info,  # Text to display
+        ha='left', va='bottom',  # Align text to corner
+        fontsize=12, color='black'
+    )
+
+    imageDir = "outputImage/Image_" + str(latest_run) + ".png"
+    plt.savefig(imageDir, dpi=300, bbox_inches='tight')
+
     plt.tight_layout()
     plt.show()
 
-
-# runAnalysis()
+runAnalysis()
 plotData()
+
+# import copy
+# import math
+# # import dataAnalysis2.py
+# best_error = float('inf')
+# best_params = {}
+# errors = []
+
+# original_kt = kt_motor
+# original_ke = ke_motor
+
+# # Small variations (tune as needed)
+# kt_range = 0.001742
+# ke_range = [original_ke * (1 + 0.01 * i) for i in range(-5, 6)]  # -5% to +5%
+
+# iteration = 0
+
+# for new_ke in ke_range:
+#     iteration += 1
+#     print(f"\n=== Iteration {iteration} ke: {new_ke:.7f} ===")
+
+#     # Set the globals
+#     # kt_motor = new_kt
+#     ke_motor = new_ke
+
+#     # Run the analysis
+#     runAnalysis()
+
+#     # Load data to compute error
+#     try:
+#         with open("analysis/noLoad2.csv", newline='') as f:
+#             reader = csv.DictReader(f)
+#             input_data = [row for row in reader]
+#         with open("analysis/motor_output.csv", newline='') as f:
+#             reader = csv.DictReader(f)
+#             sim_data = [row for row in reader]
+#     except Exception as e:
+#         print(f"Error reading CSV: {e}")
+#         continue
+
+#     total_error = 0.0
+#     count = min(len(input_data), len(sim_data))
+#     for i in range(count):
+#         try:
+#             input_rpm = float(input_data[i]['rpm'])
+#             input_current = float(input_data[i]['current'])
+
+#             sim_rpm = float(sim_data[i]['rpm'])
+#             sim_current = float(sim_data[i]['current'])
+
+#             # Compute simple absolute error
+#             rpm_err = abs(input_rpm - sim_rpm)
+#             curr_err = abs(input_current - sim_current)
+
+#             total_error += (rpm_err + curr_err) / 2.0
+
+#         except Exception as e:
+#             print(f"Parse error on row {i}: {e}")
+
+#     avg_error = total_error / count
+#     errors.append((avg_error, new_ke))
+#     print(f"Average error: {avg_error:.5f}")
+
+#     if avg_error < best_error:
+#         best_error = avg_error
+#         best_params = {'ke_motor': new_ke}
+
+#     plotData()
+
+# print("\n=== DONE ===")
+# print(f"Best avg error: {best_error:.5f}")
+# print(f"Best parameters: kt_motor = {best_params['kt_motor']:.7f}, ke_motor = {best_params['ke_motor']:.7f}")
