@@ -27,7 +27,7 @@ std::vector<ChQuaternion<>> rotss = { ChQuaternion<>(0.0,0.0,0.0,0.0),
 std::vector<ChVector3d> inertiaXX = {ChVector3d(0,0,0),
     ChVector3d( 28809.63, 28809.63, 1282.39 ),
     ChVector3d( 29568.92, 73541.07, 45865.33 ),
-    ChVector3d( 21.949, 21.949, 4.695 ),
+    ChVector3d( 17.171, 17.171, 6.269 ),
     ChVector3d( 0.604, 0.604, 1.184 ),
     ChVector3d( 9.576, 9.786, 4.288 ),
     ChVector3d( 0.604, 0.604, 1.184 ),
@@ -38,9 +38,9 @@ std::vector<ChVector3d> inertiaXX = {ChVector3d(0,0,0),
 };
 
 std::vector<double> mass = {0.0,
-    2.700,
+    2.7008,     // Corrected
     1.542,
-    0.0741,
+    0.0741,     // Corrected
     0.006,
     0.016,
     0.006,
@@ -122,7 +122,148 @@ int seeCache(const std::string cacheFile){
         outFile.close();
     }
 
-    std::cout << "This program has been run " << runCount << " times.\n";
+    std::cout << "\n\n\nThis program has been run " << runCount << " times.\n";
 
     return runCount;
+}
+
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! functions !!!!!!!!!!!!!!!!!!!!!
+std::shared_ptr<ChBody> Frame_body;
+ChQuaternion<> jointOrientation;
+
+double CumTrapezIntegration::Integrate(double& dt, double& f_new) {
+    f_new1 = f_new;
+    dt1 = dt;
+    Integral_res += dt1 * ((f_old1 + f_new1) / 2);
+    f_old1 = f_new1;
+    return Integral_res;
+}
+
+std::vector<double> GetEulerAngPos(std::shared_ptr<ChBody> body, double& t_step) {
+    static CumTrapezIntegration yawInt, pitchInt, rollInt;
+    auto vel = body->GetAngVelLocal();
+    return {
+        yawInt.Integrate(t_step, vel[0]),
+        pitchInt.Integrate(t_step, vel[1]),
+        rollInt.Integrate(t_step, vel[2])
+    };
+}
+
+std::string toLowerCase(const std::string& str) {
+    std::string lower = str;
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c){ return std::tolower(c); });
+    return lower;
+}
+
+ChSystemNSC GravetySetup() {
+    ChSystemNSC sys;
+    sys.SetCollisionSystemType(ChCollisionSystem::Type::BULLET);
+    sys.SetGravitationalAcceleration(ChVector3d(9.81e3, 0, 0));
+    return sys;
+}
+
+void createJoint(ChSystemNSC& sys, std::shared_ptr<ChBody> a, std::shared_ptr<ChBody> b, JointType type, const ChVector3d& pos, bool showAxis) {
+    auto jointFrame = ChFrame<>(pos, jointOrientation);
+    std::shared_ptr<ChLinkLock> joint;
+    if (type == JointType::FIXED) joint = chrono_types::make_shared<ChLinkLockLock>();
+    else if (type == JointType::REVOLUTE) joint = chrono_types::make_shared<ChLinkLockRevolute>();
+    else if (type == JointType::PRISMATIC) joint = chrono_types::make_shared<ChLinkLockPrismatic>();
+    joint->Initialize(a, b, jointFrame);
+    sys.AddLink(joint);
+}
+
+void gearMate(ChSystemNSC& sys, std::shared_ptr<ChBody> a, std::shared_ptr<ChBody> b, double radA, double radB) {
+    auto gear = chrono_types::make_shared<ChLinkLockGear>();
+    gear->Initialize(a, b, ChFrame<>());
+    auto rotZ = chrono::QuatFromAngleZ(CH_PI_2);
+    gear->SetFrameShaft1(ChFrame<>(VNULL, rotZ));
+    gear->SetFrameShaft2(ChFrame<>(VNULL, rotZ));
+    gear->SetTransmissionRatio(radA / radB);
+    sys.AddLink(gear);
+}
+
+RigidBody::RigidBody(ChSystemNSC& sys, const std::string& file_name, bool is_fixed, bool transparent)
+    : system(sys), obj_file(file_name), is_fixed(is_fixed) {
+    SetupRigidBody(transparent);
+}
+
+std::shared_ptr<ChBody> RigidBody::GetBody() const { return body; }
+ChVector3d RigidBody::GetCOG() const { return cog; }
+std::tuple<std::shared_ptr<ChBody>, ChVector3d> RigidBody::GetBodyAndCOG() const { return { body, cog }; }
+void RigidBody::setPos(const ChVector3d& pos) { body->SetPos(pos); }
+void RigidBody::setColor(const ChColor& color) { mesh->SetColor(color); }
+void RigidBody::setTransparent() { mesh->SetOpacity(0.5f); }
+
+void RigidBody::setData(const std::tuple<std::string, ChVector3d, ChQuaternion<>, ChVector3d, double, std::string>& data) {
+    position = std::get<1>(data);
+    rotation = std::get<2>(data);
+    inertia_SW = std::get<3>(data);
+    mass_SW = std::get<4>(data);
+    file_name = std::get<5>(data);
+    double scaleInertia = 8.5 / mass_SW;
+
+    body->SetPos(position - posOffset);
+    body->SetRot(rotation);
+    body->SetMass(mass_SW);
+    body->SetInertiaXX(inertia_SW);
+
+    if (0) {
+        std::cout << std::fixed << std::setprecision(3)
+                  << std::setw(15) << file_name << "  "
+                  << std::setw(5) << "m= " << std::setw(8) << mass_SW << "  "
+                  << std::setw(5) << "v= " << std::setw(12) << volume << "  "
+                  << std::setw(20) << inertia_SW[0] 
+                  << std::setw(20) << inertia_SW[1] 
+                  << std::setw(20) << inertia_SW[2] 
+                  << std::setw(20) << scaleInertia << std::endl;
+    }
+}
+
+void RigidBody::SetupRigidBody(bool transparent) {
+    obj_file = "my_project/CAD/DynoObj3_shapes/" + obj_file + ".obj";
+    auto trimesh = ChTriangleMeshConnected::CreateFromWavefrontFile(GetChronoDataFile(obj_file));
+    trimesh->ComputeMassProperties(true, volume, cog, geometric_inertia_calc);
+
+    density = 8970.0 / 1e9;
+    mass_calc = density * volume;
+    inertia_calc = density * geometric_inertia_calc;
+
+    body = chrono_types::make_shared<ChBody>();
+    body->SetFixed(is_fixed);
+    system.Add(body);
+
+    mesh = chrono_types::make_shared<ChVisualShapeTriangleMesh>();
+    mesh->SetMesh(trimesh);
+    mesh->SetMutable(false);
+    if (transparent) mesh->SetOpacity(0.5f);
+    mesh->SetBackfaceCull(true);
+    body->AddVisualShape(mesh);
+}
+void setDamper(ChSystemNSC& sys, std::shared_ptr<ChBody> StatorBody, std::shared_ptr<ChBody> RotorBody, ChQuaternion<> SpringDamper_Orientation, double dampConst){
+    // ===========================================================================================================================================================================================
+    // ======== F / T DEFINITION -> TORSIONAL SPRING/DAMPER: RotorWinding - Stator ====================================================================================================================================
+    // ===========================================================================================================================================================================================
+    // ======== Torsional spring coefficient ===========================================================================================================================================================================
+    double springConst = 0.0; // [(N * m) / rad]
+    springConst = springConst * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s]) 
+    // ======== Torsional damping coefficient ===========================================================================================================================================================================
+    double r_eq_RotorWinding_Stator_spr = dampConst * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])  
+    // ======== Torsional spring/damper implementation ===========================================================================================================================================================================
+    auto springDamper = chrono_types::make_shared<ChLinkRSDA>();
+    ChVector3d springDamper_Position(StatorBody->GetPos());  //[mm] set the position in the 3D space of the link respect to the absolute frame
+    ChFrame<> springDamper_Frame(springDamper_Position, SpringDamper_Orientation);
+    springDamper->Initialize(RotorBody,                                   // Body 1  
+        StatorBody,                                  // Body 2 
+        false,                                        // the two following frames are in absolute, not relative, coords.
+        springDamper_Frame,          // Location and orientation of the Body 1 frame 
+        springDamper_Frame);         // Location and orientation of the Body 1 frame
+    springDamper->SetRestAngle(0.0 * (M_PI / 180.0)); //[rad] Starting angular position
+    springDamper->SetSpringCoefficient(springConst); // [(kg mm mm)/(s^2 rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m/rad]
+    springDamper->SetDampingCoefficient(r_eq_RotorWinding_Stator_spr); // [(kg mm mm s)/(s^2 mm rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m s/rad]
+    sys.AddLink(springDamper);
+    springDamper->AddVisualShape(chrono_types::make_shared<ChVisualShapeRotSpring>(60, 50)); // var1 = radius of the spring, var2 = graphical resolution of the spring
+    auto RotorWinding_Stator_Spring_Visual = chrono_types::make_shared<ChVisualShapeRotSpring>(2.5, 70); // var1 = radius of the spring, var2 = graphical resolution of the spring
+    RotorWinding_Stator_Spring_Visual->SetColor(ChColor(0.0f, 1.0f, 0.0f));  // RGB values
+    springDamper->AddVisualShape(RotorWinding_Stator_Spring_Visual); 
 }

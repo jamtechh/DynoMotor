@@ -150,7 +150,7 @@ endif()
 # add_executable(my_demo mainProj.cpp objInfo1.cpp)
 
 # add_executable(my_demo back8.cpp objInfo1.cpp)
-add_executable(my_demo back11_noLoad.cpp objInfo2.cpp)
+add_executable(my_demo back12.cpp objInfo2.cpp)
 # add_executable(my_demo torqueTest.cpp objInfo2.cpp)
 
 # add_executable(my_demo back5_cir1_ideal.cpp objInfo1.cpp)

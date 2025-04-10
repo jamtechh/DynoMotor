@@ -1,5 +1,5 @@
-CMakeFiles/my_demo.dir/objInfo2.cpp.o: \
- /home/jamiul/Downloads/dynoMotor/objInfo2.cpp /usr/include/stdc-predef.h \
+CMakeFiles/my_demo.dir/back12.cpp.o: \
+ /home/jamiul/Downloads/dynoMotor/back12.cpp /usr/include/stdc-predef.h \
  /home/jamiul/Downloads/dynoMotor/objInfo1.h /usr/include/c++/14/iostream \
  /usr/include/c++/14/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/14/bits/c++config.h \

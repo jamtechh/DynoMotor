@@ -69,7 +69,7 @@ axs[0, 1].grid()
 
 # ---- Plot 2: angVel vs t_mechanics ----
 axs[0, 0].plot(t_mechanics, angVel, label="RPM_simulation", linestyle='-', color='g')
-axs[0, 0].set_xlabel('Time (milli seconds)')
+axs[0, 0].set_xlabel('Time (seconds)')
 axs[0, 0].set_ylabel('RPM')
 axs[0, 0].set_title('Angular Velocity vs time')
 axs[0, 0].legend()
