@@ -3,3 +3,4 @@ build/Release
 build/CMakeCache.txt
 build/cmake_install.cmake
 build/Makefile
+build/outputImage
