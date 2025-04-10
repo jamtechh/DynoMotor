@@ -5,13 +5,19 @@ double dcV = 7.4; // Volt
 double R_motor = 0.15;
 double L_motor = 1.0e-5;
 double kv_motor = 3216.117534;
-// double ke_motor =  1/(kv_motor * ((2.0 * M_PI)/60.0)); //[V/rpm]
-double ke_motor =  0.002969; //[V/rpm]
+double ke_motor =  1/(kv_motor * ((2.0 * M_PI)/60.0)); //[V/rpm]
+// double ke_motor =  0.002969;
 double kt_motor = .001842; //[Nm/A]
 double dampConst = 0.000001; //[(N*m*s)/rad]
 
 int main(int argc, char* argv[]) {
-
+    if (argc > 1) dcV = std::stod(argv[1]);
+    if (argc > 2) R_motor = std::stod(  argv[2]);
+    if (argc > 3) L_motor = std::stod(  argv[3]);
+    if (argc > 4) kv_motor = std::stod( argv[4]);
+    if (argc > 5) kt_motor = std::stod( argv[5]);
+    if (argc > 6) dampConst = std::stod( argv[6]);
+    
     int counter = 0;
     bool startPwm = 1;
     bool once = true;
@@ -194,6 +200,9 @@ int main(int argc, char* argv[]) {
     high_resolution_clock::time_point start = high_resolution_clock::now();
     // RotorBody->AccumulateTorque(0.058 * 1e3 * 1e3, true); // Apply to the body the force
 
+    double prevRpm = 0.0;
+    double diffRpm = 0.0;
+    double threshold = 1;
     while (t_sim_mechanics <= t_simulation_STOP && vis->Run()) {
         // printf("\t\t\t\t 13 - Frame Start\n\n\n");
         
@@ -204,7 +213,6 @@ int main(int argc, char* argv[]) {
         // printf("\t\t\t\t 14 - Visualization Done\n\n\n");
     
         ChVector3d Rotor_Euler_Vel;
-        ChVector3d dyno_Euler_Vel;
     
         if (t_sampling_electronic_counter >= T_ToSample_electronic) {
             Generic_Circuit.Advance(t_step_mechanic);
@@ -213,11 +221,15 @@ int main(int argc, char* argv[]) {
             Rotor_Euler_Vel = RotorBody->GetAngVelLocal();
             motorSpd = Rotor_Euler_Vel[AngVelAxis];
             motorRPM = motorSpd * (60.0 / (2.0 * M_PI));
-            std::cout << "RPM: " << motorRPM << "\t";
+            // std::cout << "RPM: " << motorRPM << "\t";
+
+            diffRpm = motorRPM - prevRpm;
+            // std::cout << "difference: " << diffRpm << "\t";
+            if(abs(diffRpm) < threshold)break;
+            else prevRpm = motorRPM;
     
             kv_motor = kv_motor;
             ke_motor = 1 / (kv_motor * ((2.0 * M_PI) / 60.0));
-            std::cout << "kv_motor: " << kv_motor << "\t";
     
             double Vbackemf = ke_motor * Rotor_Euler_Vel[AngVelAxis];
             Imotor = -res1[toLowerCase("VmotorVAR")].back();
@@ -281,36 +293,36 @@ int main(int argc, char* argv[]) {
         OutputMap["t_mechanics"].push_back(t_sim_mechanics);
     
         // printf("\t\t\t\t 18 - Output Values Logged\n\n\n");
-        std::cout << "\n";
+        std::cout << dcV << ","  << motorRPM << ","  << Imotor << ","  << R_motor << ","  << kv_motor << ","  << kt_motor << '\n';
     }
 
-    int readCount = seeCache("cache.txt");
+    // int readCount = seeCache("cache.txt");
 
-    std::ostringstream oss;
-    oss << "outputPlot/run_" << readCount << "_output_" << f_ToSample_mechanic << "_" << abs(t_step_electronic) << ".json";
-    std::string filename = oss.str();
-    std::cout<< filename;
+    // std::ostringstream oss;
+    // oss << "outputPlot/run_" << readCount << "_output_" << f_ToSample_mechanic << "_" << abs(t_step_electronic) << ".json";
+    // std::string filename = oss.str();
+    // std::cout<< filename;
 
-    json j; // Create a json object to contain the output data
-    for (const auto& item : OutputMap) { // Populate the JSON object with data
-        j[item.first] = item.second;
-    }
-    j["meta"] = {
-        {"timestep", t_step_mechanic},
-        {"kv_motor", kv_motor},
-        {"kt_motor", kt_motor},
-        {"ke_motor", ke_motor},
-        {"Resistance", R_motor},
-        {"Inductance", L_motor},
-        {"dampConst", dampConst},
-        {"AppliedVolt", dcV},
-        {"version", "v1.2"} 
-    };
-    // Export the output data in a .json file
-    std::ofstream out_file(filename);
-    out_file << j.dump(4); // "4" is the indentation parameter, you can change it to have a more or less readable structure
-    out_file.close();
-    std::cout << "\t exported" << std::endl;
+    // json j; // Create a json object to contain the output data
+    // for (const auto& item : OutputMap) { // Populate the JSON object with data
+    //     j[item.first] = item.second;
+    // }
+    // j["meta"] = {
+    //     {"timestep", t_step_mechanic},
+    //     {"kv_motor", kv_motor},
+    //     {"kt_motor", kt_motor},
+    //     {"ke_motor", ke_motor},
+    //     {"Resistance", R_motor},
+    //     {"Inductance", L_motor},
+    //     {"dampConst", dampConst},
+    //     {"AppliedVolt", dcV},
+    //     {"version", "v1.2"} 
+    // };
+    // // Export the output data in a .json file
+    // std::ofstream out_file(filename);
+    // out_file << j.dump(4); // "4" is the indentation parameter, you can change it to have a more or less readable structure
+    // out_file.close();
+    // std::cout << "\t exported" << std::endl;
 
 
     return 0;

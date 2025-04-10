@@ -122,7 +122,7 @@ int seeCache(const std::string cacheFile){
         outFile.close();
     }
 
-    std::cout << "This program has been run " << runCount << " times.\n";
+    std::cout << "\n\n\nThis program has been run " << runCount << " times.\n";
 
     return runCount;
 }
@@ -208,7 +208,7 @@ void RigidBody::setData(const std::tuple<std::string, ChVector3d, ChQuaternion<>
     body->SetMass(mass_SW);
     body->SetInertiaXX(inertia_SW);
 
-    if (debugPrint) {
+    if (0) {
         std::cout << std::fixed << std::setprecision(3)
                   << std::setw(15) << file_name << "  "
                   << std::setw(5) << "m= " << std::setw(8) << mass_SW << "  "
@@ -239,4 +239,31 @@ void RigidBody::SetupRigidBody(bool transparent) {
     if (transparent) mesh->SetOpacity(0.5f);
     mesh->SetBackfaceCull(true);
     body->AddVisualShape(mesh);
+}
+void setDamper(ChSystemNSC& sys, std::shared_ptr<ChBody> StatorBody, std::shared_ptr<ChBody> RotorBody, ChQuaternion<> SpringDamper_Orientation, double dampConst){
+    // ===========================================================================================================================================================================================
+    // ======== F / T DEFINITION -> TORSIONAL SPRING/DAMPER: RotorWinding - Stator ====================================================================================================================================
+    // ===========================================================================================================================================================================================
+    // ======== Torsional spring coefficient ===========================================================================================================================================================================
+    double springConst = 0.0; // [(N * m) / rad]
+    springConst = springConst * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s]) 
+    // ======== Torsional damping coefficient ===========================================================================================================================================================================
+    double r_eq_RotorWinding_Stator_spr = dampConst * 1e3 * 1e3; // Conversion to ([kg]-[mm]-[s])  
+    // ======== Torsional spring/damper implementation ===========================================================================================================================================================================
+    auto springDamper = chrono_types::make_shared<ChLinkRSDA>();
+    ChVector3d springDamper_Position(StatorBody->GetPos());  //[mm] set the position in the 3D space of the link respect to the absolute frame
+    ChFrame<> springDamper_Frame(springDamper_Position, SpringDamper_Orientation);
+    springDamper->Initialize(RotorBody,                                   // Body 1  
+        StatorBody,                                  // Body 2 
+        false,                                        // the two following frames are in absolute, not relative, coords.
+        springDamper_Frame,          // Location and orientation of the Body 1 frame 
+        springDamper_Frame);         // Location and orientation of the Body 1 frame
+    springDamper->SetRestAngle(0.0 * (M_PI / 180.0)); //[rad] Starting angular position
+    springDamper->SetSpringCoefficient(springConst); // [(kg mm mm)/(s^2 rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m/rad]
+    springDamper->SetDampingCoefficient(r_eq_RotorWinding_Stator_spr); // [(kg mm mm s)/(s^2 mm rad)] that should be the SI conversion ([kg]-[mm]-[s]) of [N m s/rad]
+    sys.AddLink(springDamper);
+    springDamper->AddVisualShape(chrono_types::make_shared<ChVisualShapeRotSpring>(60, 50)); // var1 = radius of the spring, var2 = graphical resolution of the spring
+    auto RotorWinding_Stator_Spring_Visual = chrono_types::make_shared<ChVisualShapeRotSpring>(2.5, 70); // var1 = radius of the spring, var2 = graphical resolution of the spring
+    RotorWinding_Stator_Spring_Visual->SetColor(ChColor(0.0f, 1.0f, 0.0f));  // RGB values
+    springDamper->AddVisualShape(RotorWinding_Stator_Spring_Visual); 
 }

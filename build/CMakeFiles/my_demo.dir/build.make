@@ -69,19 +69,19 @@ include CMakeFiles/my_demo.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/my_demo.dir/flags.make
 
-CMakeFiles/my_demo.dir/back11.cpp.o: CMakeFiles/my_demo.dir/flags.make
-CMakeFiles/my_demo.dir/back11.cpp.o: /home/saad/Downloads/dynoMotor/back11.cpp
-CMakeFiles/my_demo.dir/back11.cpp.o: CMakeFiles/my_demo.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/saad/Downloads/dynoMotor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/my_demo.dir/back11.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/my_demo.dir/back11.cpp.o -MF CMakeFiles/my_demo.dir/back11.cpp.o.d -o CMakeFiles/my_demo.dir/back11.cpp.o -c /home/saad/Downloads/dynoMotor/back11.cpp
+CMakeFiles/my_demo.dir/back12.cpp.o: CMakeFiles/my_demo.dir/flags.make
+CMakeFiles/my_demo.dir/back12.cpp.o: /home/saad/Downloads/dynoMotor/back12.cpp
+CMakeFiles/my_demo.dir/back12.cpp.o: CMakeFiles/my_demo.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/saad/Downloads/dynoMotor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/my_demo.dir/back12.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/my_demo.dir/back12.cpp.o -MF CMakeFiles/my_demo.dir/back12.cpp.o.d -o CMakeFiles/my_demo.dir/back12.cpp.o -c /home/saad/Downloads/dynoMotor/back12.cpp
 
-CMakeFiles/my_demo.dir/back11.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/my_demo.dir/back11.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/saad/Downloads/dynoMotor/back11.cpp > CMakeFiles/my_demo.dir/back11.cpp.i
+CMakeFiles/my_demo.dir/back12.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/my_demo.dir/back12.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/saad/Downloads/dynoMotor/back12.cpp > CMakeFiles/my_demo.dir/back12.cpp.i
 
-CMakeFiles/my_demo.dir/back11.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/my_demo.dir/back11.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/saad/Downloads/dynoMotor/back11.cpp -o CMakeFiles/my_demo.dir/back11.cpp.s
+CMakeFiles/my_demo.dir/back12.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/my_demo.dir/back12.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/saad/Downloads/dynoMotor/back12.cpp -o CMakeFiles/my_demo.dir/back12.cpp.s
 
 CMakeFiles/my_demo.dir/objInfo2.cpp.o: CMakeFiles/my_demo.dir/flags.make
 CMakeFiles/my_demo.dir/objInfo2.cpp.o: /home/saad/Downloads/dynoMotor/objInfo2.cpp
@@ -99,13 +99,13 @@ CMakeFiles/my_demo.dir/objInfo2.cpp.s: cmake_force
 
 # Object files for target my_demo
 my_demo_OBJECTS = \
-"CMakeFiles/my_demo.dir/back11.cpp.o" \
+"CMakeFiles/my_demo.dir/back12.cpp.o" \
 "CMakeFiles/my_demo.dir/objInfo2.cpp.o"
 
 # External object files for target my_demo
 my_demo_EXTERNAL_OBJECTS =
 
-bin/my_demo: CMakeFiles/my_demo.dir/back11.cpp.o
+bin/my_demo: CMakeFiles/my_demo.dir/back12.cpp.o
 bin/my_demo: CMakeFiles/my_demo.dir/objInfo2.cpp.o
 bin/my_demo: CMakeFiles/my_demo.dir/build.make
 bin/my_demo: /usr/lib/gcc/x86_64-linux-gnu/14/libgomp.so

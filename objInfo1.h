@@ -114,6 +114,7 @@ private:
     std::shared_ptr<ChVisualShapeTriangleMesh> mesh;
 };
 
+void setDamper(ChSystemNSC& sys, std::shared_ptr<ChBody> StatorBody, std::shared_ptr<ChBody> RotorBody, ChQuaternion<> SpringDamper_Orientation, double dampConst);
 extern std::shared_ptr<ChBody> Frame_body;
 extern ChQuaternion<> jointOrientation;
 
