@@ -8,12 +8,14 @@ import pandas as pd
 kv_motor    = 3216.11753
 
 volt        = 3.5
-R_motor     = 0.2524
+R_motor     = 0.249008
 L_motor     = 0.000001
 ke_motor    = 0.003104
 kt_motor    = 0.001740
-B           = 0.000001
-T_load      = 0.001688
+# B           = 0.000001
+# T_load      = 0.001688
+B           = 0.000006
+T_load      = 0.004572
 
 # Pattern: run_<number>_*.py
 pattern = re.compile(r"run_(\d+)_.*\.json$")
@@ -44,7 +46,7 @@ def runAnalysis():
 
     input = {}
 
-    with open("analysis/noLoad2.csv", newline='') as csvfile:
+    with open("analysis/withFlywheel_sheet2.csv", newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for header in reader.fieldnames:
             input[header] = []  # initialize list for each column
@@ -111,7 +113,7 @@ def runAnalysis():
 
 def plotData():
     input_data = {}
-    with open("analysis/noLoad2.csv", newline='') as csvfile:
+    with open("analysis/withFlywheel_sheet2.csv", newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for header in reader.fieldnames:
             input_data[header] = []

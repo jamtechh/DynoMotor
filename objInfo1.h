@@ -47,7 +47,6 @@
 // ===============================================================================================================================================================================
 using namespace std::chrono;
 using namespace chrono;
-// using namespace std;
 using namespace chrono::irrlicht;
 using namespace ::chrono::powerelectronics;
 using json = nlohmann::json;

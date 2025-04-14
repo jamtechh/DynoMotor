@@ -1,5 +1,6 @@
 #include "objInfo1.h"
 
+double t_simulation_STOP = 50.0; //[s]
 double Duty_PWM = 100.0; //[s] PWM Duty
 double dcV = 7.4; // Volt
 double R_motor = 0.15;
@@ -72,9 +73,9 @@ int main(int argc, char* argv[]) {
     createJoint(sys, body_ptrs[3], Frame_body, JointType::REVOLUTE, std::get<1>(objData[3]) - posOffset);
 
     // printf("\t\t\t\t 7 \n\n\n");
-    // gearMate(sys, RotorBody, body_ptrs[5], radA, radB);
-    // gearMate(sys, body_ptrs[5], body_ptrs[6], radB, radB);
-    // gearMate(sys, body_ptrs[7], body_ptrs[8], radB, radB);
+    gearMate(sys, RotorBody, body_ptrs[5], radA, radB);
+    gearMate(sys, body_ptrs[5], body_ptrs[6], radB, radB);
+    gearMate(sys, body_ptrs[7], body_ptrs[8], radB, radB);
     gearMate(sys, body_ptrs[8], body_ptrs[3], radB, radA);
     
 
@@ -93,7 +94,6 @@ int main(int argc, char* argv[]) {
     // vis->AddLight(ChVector3d(-300, 500, 0), 2000, ChColor(0.1f, 0.1f, 0.1f));
     // vis->EnableBodyFrameDrawing(true);
     // vis->EnableLinkFrameDrawing(true);
-    // camera->setTarget(irr::core::vector3df(1300, 0, 0));
 
     // ===========================================================================================================================================================================================
     // ======== SOLVER SETTINGS ====================================================================================================================================================================
@@ -108,8 +108,8 @@ int main(int argc, char* argv[]) {
 
     // printf("\t\t\t\t 8 \n\n\n");
     // ===========================================================================================================================================================================================
-    double t_simulation_STOP = 10.0; //[s]
-    double f_ToSample_mechanic = 1.0e2;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
+
+    double f_ToSample_mechanic = 1.0e1;//1.0e5;//8.0e3;// 0.5e4; // [Hz]
     double t_step_mechanic = 1 / f_ToSample_mechanic; // [s] Simulation Timestep
     double myStep = 1 / f_ToSample_mechanic; // [s] Simulation Timestep
     // ======== Electronic domain ====================================================================================================================================================================
@@ -201,10 +201,12 @@ int main(int argc, char* argv[]) {
 
     high_resolution_clock::time_point start = high_resolution_clock::now();
     // RotorBody->AccumulateTorque(0.058 * 1e3 * 1e3, true); // Apply to the body the force
+    // std::cout << dcV << ","  << motorRPM << ","  << Imotor << ","  << R_motor << ","  << kv_motor << ","  << kt_motor << ","  << L_motor << '\n';
 
     double prevRpm = 0.0;
     double diffRpm = 0.0;
     double threshold = 0.5;
+    bool done = false;
     while (t_sim_mechanics <= t_simulation_STOP) {
         // printf("\t\t\t\t 13 - Frame Start\n\n\n");
         // vis->Run();
@@ -227,7 +229,12 @@ int main(int argc, char* argv[]) {
 
             diffRpm = motorRPM - prevRpm;
             // std::cout << "difference: " << diffRpm << "\t";
-            if(abs(diffRpm) < threshold)break;
+            if(done)break;
+            if(abs(diffRpm) < threshold){
+                // std::cout << dcV << ","  << motorRPM << ","  << Imotor << ","  << R_motor << ","  << kv_motor << ","  << kt_motor << ","  << L_motor << '\n';
+                // std::cout << dcV << ","  << motorRPM << ","  << Imotor << ","  << R_motor << ","  << kv_motor << ","  << kt_motor << ","  << L_motor << '\n';
+                done = true;
+            }
             else prevRpm = motorRPM;
     
             kv_motor = kv_motor;
@@ -297,35 +304,35 @@ int main(int argc, char* argv[]) {
         // printf("\t\t\t\t 18 - Output Values Logged\n\n\n");
         std::cout << dcV << ","  << motorRPM << ","  << Imotor << ","  << R_motor << ","  << kv_motor << ","  << kt_motor << ","  << L_motor << '\n';
     }
+/*
+    int readCount = seeCache("cache.txt");
 
-    // int readCount = seeCache("cache.txt");
+    std::ostringstream oss;
+    oss << "outputPlot/run_" << readCount << "_output_" << f_ToSample_mechanic << "_" << abs(t_step_electronic) << ".json";
+    std::string filename = oss.str();
+    std::cout<< filename;
 
-    // std::ostringstream oss;
-    // oss << "outputPlot/run_" << readCount << "_output_" << f_ToSample_mechanic << "_" << abs(t_step_electronic) << ".json";
-    // std::string filename = oss.str();
-    // std::cout<< filename;
+    json j; // Create a json object to contain the output data
+    for (const auto& item : OutputMap) { // Populate the JSON object with data
+        j[item.first] = item.second;
+    }
+    j["meta"] = {
+        {"timestep", t_step_mechanic},
+        {"kv_motor", kv_motor},
+        {"kt_motor", kt_motor},
+        {"ke_motor", ke_motor},
+        {"Resistance", R_motor},
+        {"Inductance", L_motor},
+        {"dampConst", dampConst},
+        {"AppliedVolt", dcV},
+        {"version", "v1.2"} 
+    };
+    // Export the output data in a .json file
+    std::ofstream out_file(filename);
+    out_file << j.dump(4); // "4" is the indentation parameter, you can change it to have a more or less readable structure
+    out_file.close();
+    std::cout << "\t exported" << std::endl;
 
-    // json j; // Create a json object to contain the output data
-    // for (const auto& item : OutputMap) { // Populate the JSON object with data
-    //     j[item.first] = item.second;
-    // }
-    // j["meta"] = {
-    //     {"timestep", t_step_mechanic},
-    //     {"kv_motor", kv_motor},
-    //     {"kt_motor", kt_motor},
-    //     {"ke_motor", ke_motor},
-    //     {"Resistance", R_motor},
-    //     {"Inductance", L_motor},
-    //     {"dampConst", dampConst},
-    //     {"AppliedVolt", dcV},
-    //     {"version", "v1.2"} 
-    // };
-    // // Export the output data in a .json file
-    // std::ofstream out_file(filename);
-    // out_file << j.dump(4); // "4" is the indentation parameter, you can change it to have a more or less readable structure
-    // out_file.close();
-    // std::cout << "\t exported" << std::endl;
-
-
+*/
     return 0;
 }
